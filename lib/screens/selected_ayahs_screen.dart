@@ -43,7 +43,7 @@ class _SelectedAyahsScreenState extends State<SelectedAyahsScreen>
     final state = context.watch<AppState>();
     final goal = state.sanaqCount;
     final count = state.counter;
-    final goalReached = goal > 0 && count >= goal && !state.goalShown;
+    final goalReached = state.goalReached;
 
     return Scaffold(
       backgroundColor: Colors.white,

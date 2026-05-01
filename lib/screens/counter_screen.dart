@@ -44,7 +44,7 @@ class _CounterScreenState extends State<CounterScreen>
     final state = context.watch<AppState>();
     final goal = state.sanaqCount;
     final count = state.counter;
-    final goalReached = goal > 0 && count >= goal && !state.goalShown;
+    final goalReached = state.goalReached;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -190,12 +190,18 @@ class _CounterBottom extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           // Баннер "Мақсат орындалды"
+          // Внутри твоего метода build:
+// ...
+          // Баннер "Мақсат орындалды"
           AnimatedSwitcher(
             duration: const Duration(milliseconds: 300),
             child: goalReached
                 ? GestureDetector(
                     key: const ValueKey('goal'),
-                    onTap: onDismissGoal,
+                    onTap: () {
+                      // Если пользователь нажал сам, скрываем немедленно
+                      onDismissGoal();
+                    },
                     child: Container(
                       width: double.infinity,
                       margin: const EdgeInsets.only(bottom: 14),
@@ -204,6 +210,14 @@ class _CounterBottom extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: const Color(0xFF2E7D5E),
                         borderRadius: BorderRadius.circular(14),
+                        // Добавим небольшую тень для красоты
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 8,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
                       ),
                       child: const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -212,7 +226,7 @@ class _CounterBottom extends StatelessWidget {
                               color: Colors.white, size: 18),
                           SizedBox(width: 8),
                           Text(
-                            'Мақсат орындалды! Жалғастыру үшін басыңыз',
+                            'Мақсат орындалды!', // Убрал "нажмите чтобы продолжить", так как он уходит сам
                             style: TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.w600,
@@ -225,6 +239,7 @@ class _CounterBottom extends StatelessWidget {
                   )
                 : const SizedBox(key: ValueKey('no-goal')),
           ),
+// ...
 
           Row(
             children: [

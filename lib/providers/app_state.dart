@@ -23,7 +23,7 @@ class AppState extends ChangeNotifier {
 
   // Счётчик
   int counter = 0;
-  bool goalShown = false;
+  bool goalReached = false; // Изменено: теперь управляет показом баннера
 
   // Последний открытый аят для счётчика
   Ayah? activeAyah;
@@ -41,7 +41,7 @@ class AppState extends ChangeNotifier {
   Future<void> setSanaqCount(int v) async {
     sanaqCount = v;
     counter = 0;
-    goalShown = false;
+    goalReached = false;
     isFirstLaunch = false;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('launched', true);
@@ -98,17 +98,34 @@ class AppState extends ChangeNotifier {
     counter++;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt('counter', counter);
-    notifyListeners();
+
+    // Измененное условие: 
+    // Баннер покажется ТОЛЬКО если counter в точности равен sanaqCount 
+    // или если это первое достижение цели в этой сессии.
+    if (sanaqCount > 0 && counter == sanaqCount && !goalReached) {
+      goalReached = true;
+      notifyListeners();
+
+      // Автоматически скрываем через 3 секунды
+      Future.delayed(const Duration(seconds: 3), () {
+        goalReached = false;
+        notifyListeners();
+      });
+    } else {
+      // Если цель уже пройдена, просто обновляем число без показа баннера
+      notifyListeners();
+    }
   }
 
+  // Метод для ручного закрытия баннера[cite: 1]
   void dismissGoal() {
-    goalShown = true;
+    goalReached = false;
     notifyListeners();
   }
 
   Future<void> resetCounter() async {
     counter = 0;
-    goalShown = false;
+    goalReached = false;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt('counter', 0);
     notifyListeners();
