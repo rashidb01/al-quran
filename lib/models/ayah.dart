@@ -25,4 +25,24 @@ class Ayah {
       pageNumber: json['page_number'] as int,
     );
   }
+
+  factory Ayah.fromJson(Map<String, dynamic> json) {
+    return Ayah(
+      id: json['id'] as int,
+      verseNumber: json['verse_number'] as int,
+      textUthmani: json['text_uthmani'] as String,
+      surahNumber: json['surah_number'] as int,
+      surahName: json['surah_name'] as String,
+      pageNumber: json['page_number'] as int,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'verse_number': verseNumber,
+        'text_uthmani': textUthmani,
+        'surah_number': surahNumber,
+        'surah_name': surahName,
+        'page_number': pageNumber,
+      };
 }

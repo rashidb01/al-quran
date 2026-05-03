@@ -1,10 +1,9 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/gestures.dart'; // Добавлено для TapGestureRecognizer
 import 'package:provider/provider.dart';
 import '../models/ayah.dart';
 import '../providers/app_state.dart';
-import 'selected_ayahs_screen.dart';
-import 'count_input_screen.dart';
+import '../theme.dart';
 
 // ─── Juz by page (Medina standard) ───────────────────────────────────────────
 int _juzForPage(int page) {
@@ -89,38 +88,41 @@ class _QuranViewerScreenState extends State<QuranViewerScreen> {
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
 
+    final isDark = state.isDarkMode;
+
     return Scaffold(
-      backgroundColor: _pageColor,
+      backgroundColor: AppTheme.quranPage(isDark),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppTheme.bg(isDark),
         elevation: 0,
         automaticallyImplyLeading: false,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded,
-              color: Color(0xFF1A1A2E), size: 20),
-          onPressed: () => Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (_) => const CountInputScreen()),
+          icon: Icon(
+            isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+            size: 20,
+            color: AppTheme.tertiary(isDark),
           ),
+          onPressed: () => context.read<AppState>().toggleDarkMode(),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.menu_book_rounded, color: Color(0xFF2E7D5E)),
+            icon: Icon(Icons.menu_book_rounded,
+                color: AppTheme.tertiary(isDark), size: 20),
             onPressed: () => _showSurahPicker(context),
           ),
         ],
         centerTitle: true,
         title: Text(
           '$_currentPage',
-          style: const TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF9E9E9E),
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w400,
+            color: AppTheme.tertiary(isDark),
           ),
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(height: 1, color: const Color(0xFFF0F0F0)),
+          child: Container(height: 1, color: AppTheme.divider(isDark)),
         ),
       ),
       body: PageView.builder(
@@ -134,36 +136,26 @@ class _QuranViewerScreenState extends State<QuranViewerScreen> {
       ),
       bottomNavigationBar: state.selectedAyahs.isNotEmpty
           ? SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(24, 8, 24, 12),
-                child: GestureDetector(
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (_) => const SelectedAyahsScreen()),
+              child: GestureDetector(
+                onTap: () => Navigator.pop(context),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: AppTheme.bg(isDark),
+                    border: Border(
+                        top: BorderSide(color: AppTheme.divider(isDark))),
                   ),
-                  child: Container(
-                    height: 56,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF2E7D5E),
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF2E7D5E).withValues(alpha: 0.3),
-                          blurRadius: 16,
-                          offset: const Offset(0, 6),
-                        ),
-                      ],
-                    ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      'Таңдау (${state.selectedAyahs.length})',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
+                  padding: const EdgeInsets.fromLTRB(24, 14, 24, 14),
+                  child: Row(
+                    children: [
+                      Icon(Icons.arrow_back_ios_new_rounded,
+                          size: 11, color: AppTheme.tertiary(isDark)),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Таңдалған (${state.selectedAyahs.length})',
+                        style: TextStyle(
+                            fontSize: 15, color: AppTheme.secondary(isDark)),
                       ),
-                    ),
+                    ],
                   ),
                 ),
               ),
@@ -197,10 +189,12 @@ class _QuranPageState extends State<_QuranPage> {
     final ayahs = state.getPage(widget.pageNumber);
     final isLoading = state.isPageLoading(widget.pageNumber);
 
+    final isDark = state.isDarkMode;
+
     if (isLoading || ayahs == null) {
-      return const Center(
+      return Center(
         child: CircularProgressIndicator(
-            color: Color(0xFF2E7D5E), strokeWidth: 2),
+            color: AppTheme.tertiary(isDark), strokeWidth: 1.5),
       );
     }
 
@@ -213,59 +207,47 @@ class _QuranPageState extends State<_QuranPage> {
         '';
 
     return Container(
-      color: _pageColor,
+      color: AppTheme.quranPage(isDark),
       child: Column(
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(18, 8, 18, 6),
             child: Row(
               children: [
-                Text(
-                  'джуз $juz',
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: Color(0xFF555555),
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
+                Text('джуз $juz',
+                    style: TextStyle(
+                        fontSize: 12, color: AppTheme.tertiary(isDark))),
                 const Spacer(),
-                Text(
-                  '$firstSurahKazakh  ',
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: Color(0xFF555555),
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
+                Text('$firstSurahKazakh  ',
+                    style: TextStyle(
+                        fontSize: 12, color: AppTheme.tertiary(isDark))),
                 Text(
                   firstSurahArabic,
                   textDirection: TextDirection.rtl,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'ScheherazadeNew',
-                    fontSize: 16,
-                    color: Color(0xFF555555),
-                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                    color: AppTheme.tertiary(isDark),
                   ),
                 ),
               ],
             ),
           ),
-          Container(height: 0.5, color: const Color(0xFFCCCCCC)),
+          Container(height: 0.5, color: AppTheme.divider(isDark)),
           Expanded(
             child: _isSpecialPage(widget.pageNumber)
-                ? _SpecialPageContent(
-                    ayahs: ayahs, pageNumber: widget.pageNumber)
-                : _LinesContainer(ayahs: ayahs),
+                ? _SpecialPageContent(ayahs: ayahs, pageNumber: widget.pageNumber, isDark: isDark)
+                : _LinesContainer(ayahs: ayahs, isDark: isDark),
           ),
-          Container(height: 0.5, color: const Color(0xFFCCCCCC)),
+          Container(height: 0.5, color: AppTheme.divider(isDark)),
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 6),
             child: Text(
               '${widget.pageNumber}',
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'ScheherazadeNew',
                 fontSize: 15,
-                color: Color(0xFF888888),
+                color: AppTheme.secondary(isDark),
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -279,7 +261,8 @@ class _QuranPageState extends State<_QuranPage> {
 // ─── Lines container (quran.com style) ───────────────────────────────────────
 class _LinesContainer extends StatelessWidget {
   final List<Ayah> ayahs;
-  const _LinesContainer({required this.ayahs});
+  final bool isDark;
+  const _LinesContainer({required this.ayahs, required this.isDark});
 
   String _toArabicNum(int n) {
     const d = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
@@ -311,61 +294,58 @@ class _LinesContainer extends StatelessWidget {
     }
     flush(lastName);
 
-    return LayoutBuilder(builder: (ctx, constraints) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              for (int gi = 0; gi < groups.length; gi++) ...[
-                if (gi > 0) _MidPageBanner(surahName: groups[gi].surahName),
-                Directionality(
-                  textDirection: TextDirection.rtl,
-                  child: Text.rich(
-                    TextSpan(
-                      children: [
-                        for (var ayah in groups[gi].ayahs) ...[
-                          TextSpan(
-                            text: ayah.textUthmani,
-                            style: TextStyle(
-                              fontFamily: 'ScheherazadeNew',
-                              fontSize: 24,
-                              height: 2.2,
-                              color: state.selectedAyahIds.contains(ayah.id)
-                                  ? const Color(0xFF2E7D5E)
-                                  : const Color(0xFF1A1A1A),
-                              backgroundColor: state.selectedAyahIds.contains(ayah.id)
-                                  ? const Color(0xFFD4EDDA).withValues(alpha: 0.5)
-                                  : Colors.transparent,
-                            ),
-                            recognizer: TapGestureRecognizer()
-                              ..onTap = () => context.read<AppState>().toggleAyah(ayah),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+      child: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            for (int gi = 0; gi < groups.length; gi++) ...[
+              if (gi > 0) _MidPageBanner(surahName: groups[gi].surahName, isDark: isDark),
+              Directionality(
+                textDirection: TextDirection.rtl,
+                child: Text.rich(
+                  TextSpan(
+                    children: [
+                      for (var ayah in groups[gi].ayahs) ...[
+                        TextSpan(
+                          text: ayah.textUthmani,
+                          style: TextStyle(
+                            fontFamily: 'ScheherazadeNew',
+                            fontSize: 24,
+                            height: 2.2,
+                            color: AppTheme.quranText(isDark),
+                            backgroundColor: state.selectedAyahIds.contains(ayah.id)
+                                ? AppTheme.selected(isDark)
+                                : Colors.transparent,
                           ),
-                          WidgetSpan(
-                            alignment: PlaceholderAlignment.middle,
-                            child: GestureDetector(
-                              onTap: () => context.read<AppState>().toggleAyah(ayah),
-                              child: _VerseMarker(
-                                number: ayah.verseNumber,
-                                toArabic: _toArabicNum,
-                                selected: state.selectedAyahIds.contains(ayah.id),
-                              ),
+                          recognizer: TapGestureRecognizer()
+                            ..onTap = () => context.read<AppState>().toggleAyah(ayah),
+                        ),
+                        WidgetSpan(
+                          alignment: PlaceholderAlignment.middle,
+                          child: GestureDetector(
+                            onTap: () => context.read<AppState>().toggleAyah(ayah),
+                            child: _VerseMarker(
+                              number: ayah.verseNumber,
+                              toArabic: _toArabicNum,
+                              selected: state.selectedAyahIds.contains(ayah.id),
+                              isDark: isDark,
                             ),
                           ),
-                        ],
+                        ),
                       ],
-                    ),
-                    textAlign: TextAlign.justify,
+                    ],
                   ),
+                  textAlign: TextAlign.justify,
                 ),
-              ],
+              ),
             ],
-          ),
+          ],
         ),
-      );
-    });
+      ),
+    );
   }
 }
 
@@ -380,14 +360,16 @@ class _VerseMarker extends StatelessWidget {
   final int number;
   final String Function(int) toArabic;
   final bool selected;
+  final bool isDark;
   const _VerseMarker(
       {required this.number,
       required this.toArabic,
-      required this.selected});
+      required this.selected,
+      required this.isDark});
 
   @override
   Widget build(BuildContext context) {
-    const color = Color(0xFF8B6914);
+    final color = isDark ? const Color(0xFFB8A060) : const Color(0xFF8B6914);
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 3),
       width: 28,
@@ -399,7 +381,7 @@ class _VerseMarker extends StatelessWidget {
       alignment: Alignment.center,
       child: Text(
         toArabic(number),
-        style: const TextStyle(
+        style: TextStyle(
           fontFamily: 'ScheherazadeNew',
           fontSize: 10,
           color: color,
@@ -413,40 +395,33 @@ class _VerseMarker extends StatelessWidget {
 // ─── Mid-page surah banner ────────────────────────────────────────────────────
 class _MidPageBanner extends StatelessWidget {
   final String surahName;
-  const _MidPageBanner({required this.surahName});
+  final bool isDark;
+  const _MidPageBanner({required this.surahName, required this.isDark});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.symmetric(vertical: 6),
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-            color: const Color(0xFF2E7D5E).withValues(alpha: 0.2), width: 1),
-      ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
       child: Column(
         children: [
           Text(
             surahName,
             textDirection: TextDirection.rtl,
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: 'ScheherazadeNew',
               fontSize: 22,
-              color: Color(0xFF2E7D5E),
-              fontWeight: FontWeight.w700,
+              color: AppTheme.quranText(isDark),
+              fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(height: 4),
-          const Text(
+          Text(
             'بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ',
             textDirection: TextDirection.rtl,
             style: TextStyle(
               fontFamily: 'ScheherazadeNew',
-              fontSize: 17,
-              color: Color(0xFF1A1A1A),
+              fontSize: 16,
+              color: AppTheme.secondary(isDark),
             ),
           ),
         ],
@@ -459,8 +434,9 @@ class _MidPageBanner extends StatelessWidget {
 class _SpecialPageContent extends StatelessWidget {
   final List<Ayah> ayahs;
   final int pageNumber;
+  final bool isDark;
   const _SpecialPageContent(
-      {required this.ayahs, required this.pageNumber});
+      {required this.ayahs, required this.pageNumber, required this.isDark});
 
   String _toArabicNum(int n) {
     const d = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
@@ -476,40 +452,30 @@ class _SpecialPageContent extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 40, 16, 24),
       child: Column(
         children: [
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                  color: const Color(0xFF2E7D5E).withValues(alpha: 0.2)),
-            ),
-            child: Column(
-              children: [
-                Text(
-                  surahName,
-                  textDirection: TextDirection.rtl,
-                  style: const TextStyle(
-                    fontFamily: 'ScheherazadeNew',
-                    fontSize: 26,
-                    color: Color(0xFF2E7D5E),
-                    fontWeight: FontWeight.w700,
-                  ),
+          Column(
+            children: [
+              Text(
+                surahName,
+                textDirection: TextDirection.rtl,
+                style: TextStyle(
+                  fontFamily: 'ScheherazadeNew',
+                  fontSize: 26,
+                  color: AppTheme.quranText(isDark),
+                  fontWeight: FontWeight.w600,
                 ),
-                const SizedBox(height: 8),
-                const Text(
-                  'بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ',
-                  textDirection: TextDirection.rtl,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontFamily: 'ScheherazadeNew',
-                    fontSize: 20,
-                    color: Color(0xFF1A1A1A),
-                  ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ',
+                textDirection: TextDirection.rtl,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontFamily: 'ScheherazadeNew',
+                  fontSize: 18,
+                  color: AppTheme.secondary(isDark),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
           const SizedBox(height: 24),
           ...ayahs.map((ayah) {
@@ -522,8 +488,8 @@ class _SpecialPageContent extends StatelessWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                 decoration: BoxDecoration(
-                  color: sel ? const Color(0xFFD4EDDA) : Colors.transparent,
-                  borderRadius: BorderRadius.circular(6),
+                  color: sel ? AppTheme.selected(isDark) : Colors.transparent,
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -538,9 +504,7 @@ class _SpecialPageContent extends StatelessWidget {
                           fontFamily: 'ScheherazadeNew',
                           fontSize: 28,
                           height: 2.4,
-                          color: sel
-                              ? const Color(0xFF1A5C40)
-                              : const Color(0xFF1A1A1A),
+                          color: AppTheme.quranText(isDark),
                         ),
                       ),
                     ),
@@ -549,6 +513,7 @@ class _SpecialPageContent extends StatelessWidget {
                       number: ayah.verseNumber,
                       toArabic: _toArabicNum,
                       selected: sel,
+                      isDark: isDark,
                     ),
                   ],
                 ),
@@ -710,11 +675,13 @@ class _SurahPickerSheetState extends State<_SurahPickerSheet> {
                 s.surah.toString() == _query)
             .toList();
 
+    final isDark = context.watch<AppState>().isDarkMode;
+
     return Container(
       height: MediaQuery.of(context).size.height * 0.85,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: AppTheme.bg(isDark),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
         children: [
@@ -727,14 +694,14 @@ class _SurahPickerSheetState extends State<_SurahPickerSheet> {
               borderRadius: BorderRadius.circular(2),
             ),
           ),
-          const Padding(
-            padding: EdgeInsets.only(bottom: 12),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
             child: Text(
               'Сүре таңдау',
               style: TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF1A1A2E),
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: AppTheme.primary(isDark),
               ),
             ),
           ),
@@ -742,7 +709,7 @@ class _SurahPickerSheetState extends State<_SurahPickerSheet> {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Container(
               decoration: BoxDecoration(
-                color: const Color(0xFFF5F5F5),
+                color: AppTheme.surface(isDark),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: TextField(
@@ -761,7 +728,7 @@ class _SurahPickerSheetState extends State<_SurahPickerSheet> {
             ),
           ),
           const SizedBox(height: 8),
-          Container(height: 1, color: const Color(0xFFF0F0F0)),
+          Container(height: 1, color: AppTheme.divider(isDark)),
           Expanded(
             child: ListView.builder(
               itemCount: filtered.length,
@@ -774,50 +741,31 @@ class _SurahPickerSheetState extends State<_SurahPickerSheet> {
                         horizontal: 20, vertical: 14),
                     child: Row(
                       children: [
-                        Container(
-                          width: 36,
-                          height: 36,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF0F7F4),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          alignment: Alignment.center,
-                          child: Text(
-                            '${s.surah}',
-                            style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF2E7D5E),
-                            ),
-                          ),
+                        SizedBox(
+                          width: 28,
+                          child: Text('${s.surah}',
+                              style: TextStyle(
+                                  fontSize: 12,
+                                  color: AppTheme.tertiary(isDark))),
                         ),
                         const SizedBox(width: 14),
                         Expanded(
-                          child: Text(
-                            s.kazakh,
-                            style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w500,
-                              color: Color(0xFF1A1A2E),
-                            ),
-                          ),
+                          child: Text(s.kazakh,
+                              style: TextStyle(
+                                  fontSize: 15,
+                                  color: AppTheme.primary(isDark))),
                         ),
-                        Text(
-                          s.arabic,
-                          style: const TextStyle(
-                            fontFamily: 'ScheherazadeNew',
-                            fontSize: 20,
-                            color: Color(0xFF2E7D5E),
-                          ),
-                        ),
+                        Text(s.arabic,
+                            style: TextStyle(
+                              fontFamily: 'ScheherazadeNew',
+                              fontSize: 20,
+                              color: AppTheme.primary(isDark),
+                            )),
                         const SizedBox(width: 12),
-                        Text(
-                          '${s.page}-б.',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Color(0xFF9E9E9E),
-                          ),
-                        ),
+                        Text('${s.page}',
+                            style: TextStyle(
+                                fontSize: 12,
+                                color: AppTheme.tertiary(isDark))),
                       ],
                     ),
                   ),

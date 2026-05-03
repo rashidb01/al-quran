@@ -6,10 +6,6 @@ import 'screens/splash_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-    statusBarColor: Colors.transparent,
-    statusBarIconBrightness: Brightness.dark,
-  ));
   runApp(const AlQuranApp());
 }
 
@@ -20,18 +16,31 @@ class AlQuranApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (_) => AppState()..init(),
-      child: MaterialApp(
-        title: 'Al Quran',
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: const Color(0xFF2E7D5E),
-            brightness: Brightness.light,
-          ),
-          scaffoldBackgroundColor: Colors.white,
-          useMaterial3: true,
-        ),
-        home: const SplashScreen(),
+      child: Consumer<AppState>(
+        builder: (context, state, _) {
+          SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+            statusBarColor: Colors.transparent,
+            statusBarIconBrightness:
+                state.isDarkMode ? Brightness.light : Brightness.dark,
+          ));
+          return MaterialApp(
+            title: 'Al Quran',
+            debugShowCheckedModeBanner: false,
+            themeMode:
+                state.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+            theme: ThemeData(
+              brightness: Brightness.light,
+              scaffoldBackgroundColor: Colors.white,
+              useMaterial3: true,
+            ),
+            darkTheme: ThemeData(
+              brightness: Brightness.dark,
+              scaffoldBackgroundColor: const Color(0xFF111111),
+              useMaterial3: true,
+            ),
+            home: const SplashScreen(),
+          );
+        },
       ),
     );
   }

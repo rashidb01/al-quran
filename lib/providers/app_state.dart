@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/ayah.dart';
@@ -28,14 +29,42 @@ class AppState extends ChangeNotifier {
   // Последний открытый аят для счётчика
   Ayah? activeAyah;
 
+  // Dark mode
+  bool isDarkMode = false;
+
   Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
     isFirstLaunch = prefs.getBool('launched') != true;
+    isDarkMode = prefs.getBool('darkMode') ?? false;
     if (!isFirstLaunch) {
       sanaqCount = prefs.getInt('sanaqCount') ?? 0;
       counter = prefs.getInt('counter') ?? 0;
+      final raw = prefs.getString('selectedAyahs');
+      if (raw != null) {
+        final list = jsonDecode(raw) as List;
+        for (final item in list) {
+          final ayah = Ayah.fromJson(item as Map<String, dynamic>);
+          selectedAyahIds.add(ayah.id);
+          selectedAyahs.add(ayah);
+        }
+      }
     }
     notifyListeners();
+  }
+
+  Future<void> toggleDarkMode() async {
+    isDarkMode = !isDarkMode;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('darkMode', isDarkMode);
+    notifyListeners();
+  }
+
+  Future<void> _saveSelectedAyahs() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(
+      'selectedAyahs',
+      jsonEncode(selectedAyahs.map((a) => a.toJson()).toList()),
+    );
   }
 
   Future<void> setSanaqCount(int v) async {
@@ -75,18 +104,21 @@ class AppState extends ChangeNotifier {
       selectedAyahs.add(ayah);
     }
     notifyListeners();
+    _saveSelectedAyahs();
   }
 
   void removeAyah(Ayah ayah) {
     selectedAyahIds.remove(ayah.id);
     selectedAyahs.removeWhere((a) => a.id == ayah.id);
     notifyListeners();
+    _saveSelectedAyahs();
   }
 
   void clearAllAyahs() {
     selectedAyahIds.clear();
     selectedAyahs.clear();
     notifyListeners();
+    _saveSelectedAyahs();
   }
 
   void setActiveAyah(Ayah ayah) {

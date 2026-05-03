@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_state.dart';
 import 'count_input_screen.dart';
-import 'counter_screen.dart';
+import 'dua_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -15,34 +15,22 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    // Ждём пока AppState.init() завершится, потом навигируем
     WidgetsBinding.instance.addPostFrameCallback((_) => _navigate());
   }
 
   Future<void> _navigate() async {
-    // Небольшая задержка чтобы init() успел загрузить SharedPreferences
     await Future.delayed(const Duration(milliseconds: 300));
     if (!mounted) return;
 
     final state = context.read<AppState>();
-    if (state.isFirstLaunch) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const CountInputScreen()),
-      );
-    } else if (state.activeAyah != null) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-            builder: (_) => CounterScreen(ayah: state.activeAyah!)),
-      );
-    } else {
-      // Был запуск раньше, но аят не выбран — идём на мусхаф
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const CountInputScreen()),
-      );
-    }
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => state.isFirstLaunch
+            ? const CountInputScreen()
+            : const DuaScreen(),
+      ),
+    );
   }
 
   @override

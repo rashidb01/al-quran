@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_state.dart';
-import 'quran_viewer_screen.dart';
+import '../theme.dart';
+import 'home_screen.dart';
 
 class CountInputScreen extends StatefulWidget {
   const CountInputScreen({super.key});
@@ -26,92 +27,76 @@ class _CountInputScreenState extends State<CountInputScreen> {
     if (mounted) {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const QuranViewerScreen()),
+        MaterialPageRoute(builder: (_) => const HomeScreen()),
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final isDark = context.watch<AppState>().isDarkMode;
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppTheme.bg(isDark),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 32),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Spacer(flex: 2),
-              const Text(
-                'Al Quran',
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF1A1A2E),
-                  letterSpacing: -0.5,
-                ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Санақ санын енгізіңіз',
-                style: TextStyle(fontSize: 15, color: Color(0xFF9E9E9E)),
-              ),
-              const Spacer(flex: 2),
-              Container(
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF8F8F8),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFEEEEEE)),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.04),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: TextField(
-                  controller: _controller,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF1A1A2E),
-                  ),
-                  decoration: const InputDecoration(
-                    hintText: '0',
-                    hintStyle: TextStyle(color: Color(0xFFCCCCCC), fontSize: 28),
-                    border: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(vertical: 20),
+              Padding(
+                padding: const EdgeInsets.only(top: 20),
+                child: GestureDetector(
+                  onTap: () => context.read<AppState>().toggleDarkMode(),
+                  child: Icon(
+                    isDark
+                        ? Icons.light_mode_rounded
+                        : Icons.dark_mode_rounded,
+                    size: 20,
+                    color: AppTheme.tertiary(isDark),
                   ),
                 ),
               ),
+              const Spacer(flex: 2),
+              Text('Санақ санын енгізіңіз',
+                  style: TextStyle(
+                      fontSize: 15, color: AppTheme.secondary(isDark))),
               const SizedBox(height: 24),
+              TextField(
+                controller: _controller,
+                keyboardType: TextInputType.number,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                autofocus: true,
+                textAlign: TextAlign.left,
+                style: TextStyle(
+                  fontSize: 48,
+                  fontWeight: FontWeight.w200,
+                  color: AppTheme.primary(isDark),
+                ),
+                decoration: InputDecoration(
+                  hintText: '0',
+                  hintStyle: TextStyle(
+                      color: AppTheme.tertiary(isDark),
+                      fontSize: 48,
+                      fontWeight: FontWeight.w200),
+                  border: InputBorder.none,
+                ),
+              ),
+              const Spacer(flex: 2),
               GestureDetector(
                 onTap: _continue,
-                child: Container(
-                  height: 56,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF2E7D5E),
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF2E7D5E).withValues(alpha: 0.3),
-                        blurRadius: 16,
-                        offset: const Offset(0, 6),
-                      ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  child: Row(
+                    children: [
+                      Text('Жалғастыру',
+                          style: TextStyle(
+                              fontSize: 15,
+                              color: AppTheme.secondary(isDark))),
+                      const SizedBox(width: 4),
+                      Icon(Icons.arrow_forward_ios_rounded,
+                          size: 11, color: AppTheme.tertiary(isDark)),
                     ],
-                  ),
-                  alignment: Alignment.center,
-                  child: const Text(
-                    'Жалғастыру',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 17,
-                      fontWeight: FontWeight.w600,
-                    ),
                   ),
                 ),
               ),
