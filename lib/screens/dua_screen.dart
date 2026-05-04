@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_state.dart';
 import '../theme.dart';
+import '../l10n.dart';
 import 'home_screen.dart';
 
 class DuaScreen extends StatefulWidget {
@@ -40,7 +41,9 @@ class _DuaScreenState extends State<DuaScreen>
 
   @override
   Widget build(BuildContext context) {
-    final isDark = context.watch<AppState>().isDarkMode;
+    final state = context.watch<AppState>();
+    final isDark = state.isDarkMode;
+    final l = L10n(state.locale);
 
     return Scaffold(
       backgroundColor: AppTheme.bg(isDark),
@@ -80,7 +83,7 @@ class _DuaScreenState extends State<DuaScreen>
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Мен қуылған шайтаннан Аллаhқа паналаймын',
+                  l.audhuTranslation,
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 14,
@@ -92,7 +95,7 @@ class _DuaScreenState extends State<DuaScreen>
                 Padding(
                   padding: const EdgeInsets.only(bottom: 36),
                   child: Text(
-                    'жалғастыру үшін басыңыз',
+                    l.tapToContinue,
                     textAlign: TextAlign.center,
                     style: TextStyle(
                         fontSize: 12, color: AppTheme.tertiary(isDark)),

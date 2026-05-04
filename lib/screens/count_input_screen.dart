@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../providers/app_state.dart';
 import '../theme.dart';
+import '../l10n.dart';
 import 'home_screen.dart';
 
 class CountInputScreen extends StatefulWidget {
@@ -34,7 +36,9 @@ class _CountInputScreenState extends State<CountInputScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = context.watch<AppState>().isDarkMode;
+    final state = context.watch<AppState>();
+    final isDark = state.isDarkMode;
+    final l = L10n(state.locale);
 
     return Scaffold(
       backgroundColor: AppTheme.bg(isDark),
@@ -58,7 +62,7 @@ class _CountInputScreenState extends State<CountInputScreen> {
                 ),
               ),
               const Spacer(flex: 2),
-              Text('Санақ санын енгізіңіз',
+              Text(l.enterSanaqCount,
                   style: TextStyle(
                       fontSize: 15, color: AppTheme.secondary(isDark))),
               const SizedBox(height: 24),
@@ -89,7 +93,7 @@ class _CountInputScreenState extends State<CountInputScreen> {
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   child: Row(
                     children: [
-                      Text('Жалғастыру',
+                      Text(l.continueBtn,
                           style: TextStyle(
                               fontSize: 15,
                               color: AppTheme.secondary(isDark))),
@@ -101,6 +105,34 @@ class _CountInputScreenState extends State<CountInputScreen> {
                 ),
               ),
               const Spacer(flex: 3),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    GestureDetector(
+                      onTap: () => launchUrl(Uri.parse(
+                          'https://qazaq159.github.io/sanaq-quran-legal/privacy-policy')),
+                      child: Text('Privacy Policy',
+                          style: TextStyle(
+                              fontSize: 11,
+                              color: AppTheme.tertiary(isDark))),
+                    ),
+                    Text('  ·  ',
+                        style: TextStyle(
+                            fontSize: 11,
+                            color: AppTheme.tertiary(isDark))),
+                    GestureDetector(
+                      onTap: () => launchUrl(Uri.parse(
+                          'https://qazaq159.github.io/sanaq-quran-legal/terms')),
+                      child: Text('Terms of Use',
+                          style: TextStyle(
+                              fontSize: 11,
+                              color: AppTheme.tertiary(isDark))),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
         ),

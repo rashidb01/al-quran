@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/ayah.dart';
 import '../services/quran_service.dart';
+import '../l10n.dart';
 
 class AppState extends ChangeNotifier {
   final QuranService _service = QuranService();
@@ -32,10 +33,19 @@ class AppState extends ChangeNotifier {
   // Dark mode
   bool isDarkMode = false;
 
+  // Locale
+  AppLocale locale = AppLocale.kk;
+
+  // Quran font size
+  double quranFontSize = 24.0;
+
   Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
     isFirstLaunch = prefs.getBool('launched') != true;
     isDarkMode = prefs.getBool('darkMode') ?? false;
+    final localeStr = prefs.getString('locale') ?? 'kk';
+    locale = AppLocale.values.firstWhere((e) => e.name == localeStr, orElse: () => AppLocale.kk);
+    quranFontSize = prefs.getDouble('quranFontSize') ?? 24.0;
     if (!isFirstLaunch) {
       sanaqCount = prefs.getInt('sanaqCount') ?? 0;
       counter = prefs.getInt('counter') ?? 0;
@@ -49,6 +59,20 @@ class AppState extends ChangeNotifier {
         }
       }
     }
+    notifyListeners();
+  }
+
+  Future<void> setLocale(AppLocale l) async {
+    locale = l;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('locale', l.name);
+    notifyListeners();
+  }
+
+  Future<void> setQuranFontSize(double size) async {
+    quranFontSize = size;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble('quranFontSize', size);
     notifyListeners();
   }
 

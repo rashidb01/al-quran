@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../models/ayah.dart';
 import '../providers/app_state.dart';
 import '../theme.dart';
+import '../l10n.dart';
 
 // ─── Juz by page (Medina standard) ───────────────────────────────────────────
 int _juzForPage(int page) {
@@ -84,6 +85,14 @@ class _QuranViewerScreenState extends State<QuranViewerScreen> {
     );
   }
 
+  void _showFontSize(BuildContext ctx) {
+    showModalBottomSheet(
+      context: ctx,
+      backgroundColor: Colors.transparent,
+      builder: (_) => const _FontSizeSheet(),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
@@ -105,6 +114,11 @@ class _QuranViewerScreenState extends State<QuranViewerScreen> {
           onPressed: () => context.read<AppState>().toggleDarkMode(),
         ),
         actions: [
+          IconButton(
+            icon: Icon(Icons.format_size_rounded,
+                color: AppTheme.tertiary(isDark), size: 20),
+            onPressed: () => _showFontSize(context),
+          ),
           IconButton(
             icon: Icon(Icons.menu_book_rounded,
                 color: AppTheme.tertiary(isDark), size: 20),
@@ -151,7 +165,7 @@ class _QuranViewerScreenState extends State<QuranViewerScreen> {
                           size: 11, color: AppTheme.tertiary(isDark)),
                       const SizedBox(width: 6),
                       Text(
-                        'Таңдалған (${state.selectedAyahs.length})',
+                        L10n(state.locale).selected(state.selectedAyahs.length),
                         style: TextStyle(
                             fontSize: 15, color: AppTheme.secondary(isDark)),
                       ),
@@ -200,11 +214,12 @@ class _QuranPageState extends State<_QuranPage> {
 
     final juz = _juzForPage(widget.pageNumber);
     final firstSurahArabic = ayahs.isNotEmpty ? ayahs.first.surahName : '';
-    final firstSurahKazakh = _surahPages
+    final firstSurahNumber = _surahPages
             .where((s) => s.arabic == firstSurahArabic)
             .firstOrNull
-            ?.kazakh ??
-        '';
+            ?.surah ?? 1;
+    final l = L10n(state.locale);
+    final firstSurahLocalized = _localizedSurahName(firstSurahNumber, state.locale);
 
     return Container(
       color: AppTheme.quranPage(isDark),
@@ -214,11 +229,11 @@ class _QuranPageState extends State<_QuranPage> {
             padding: const EdgeInsets.fromLTRB(18, 8, 18, 6),
             child: Row(
               children: [
-                Text('джуз $juz',
+                Text(l.juz(juz),
                     style: TextStyle(
                         fontSize: 12, color: AppTheme.tertiary(isDark))),
                 const Spacer(),
-                Text('$firstSurahKazakh  ',
+                Text('$firstSurahLocalized  ',
                     style: TextStyle(
                         fontSize: 12, color: AppTheme.tertiary(isDark))),
                 Text(
@@ -236,8 +251,8 @@ class _QuranPageState extends State<_QuranPage> {
           Container(height: 0.5, color: AppTheme.divider(isDark)),
           Expanded(
             child: _isSpecialPage(widget.pageNumber)
-                ? _SpecialPageContent(ayahs: ayahs, pageNumber: widget.pageNumber, isDark: isDark)
-                : _LinesContainer(ayahs: ayahs, isDark: isDark),
+                ? _SpecialPageContent(ayahs: ayahs, pageNumber: widget.pageNumber, isDark: isDark, fontSize: state.quranFontSize)
+                : _LinesContainer(ayahs: ayahs, isDark: isDark, fontSize: state.quranFontSize),
           ),
           Container(height: 0.5, color: AppTheme.divider(isDark)),
           Padding(
@@ -262,7 +277,8 @@ class _QuranPageState extends State<_QuranPage> {
 class _LinesContainer extends StatelessWidget {
   final List<Ayah> ayahs;
   final bool isDark;
-  const _LinesContainer({required this.ayahs, required this.isDark});
+  final double fontSize;
+  const _LinesContainer({required this.ayahs, required this.isDark, required this.fontSize});
 
   String _toArabicNum(int n) {
     const d = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
@@ -302,7 +318,7 @@ class _LinesContainer extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             for (int gi = 0; gi < groups.length; gi++) ...[
-              if (gi > 0) _MidPageBanner(surahName: groups[gi].surahName, isDark: isDark),
+              if (gi > 0) _MidPageBanner(surahName: groups[gi].surahName, isDark: isDark, fontSize: fontSize),
               Directionality(
                 textDirection: TextDirection.rtl,
                 child: Text.rich(
@@ -313,7 +329,7 @@ class _LinesContainer extends StatelessWidget {
                           text: ayah.textUthmani,
                           style: TextStyle(
                             fontFamily: 'ScheherazadeNew',
-                            fontSize: 24,
+                            fontSize: fontSize,
                             height: 2.2,
                             color: AppTheme.quranText(isDark),
                             backgroundColor: state.selectedAyahIds.contains(ayah.id)
@@ -396,7 +412,8 @@ class _VerseMarker extends StatelessWidget {
 class _MidPageBanner extends StatelessWidget {
   final String surahName;
   final bool isDark;
-  const _MidPageBanner({required this.surahName, required this.isDark});
+  final double fontSize;
+  const _MidPageBanner({required this.surahName, required this.isDark, required this.fontSize});
 
   @override
   Widget build(BuildContext context) {
@@ -409,7 +426,7 @@ class _MidPageBanner extends StatelessWidget {
             textDirection: TextDirection.rtl,
             style: TextStyle(
               fontFamily: 'ScheherazadeNew',
-              fontSize: 22,
+              fontSize: fontSize,
               color: AppTheme.quranText(isDark),
               fontWeight: FontWeight.w600,
             ),
@@ -420,7 +437,7 @@ class _MidPageBanner extends StatelessWidget {
             textDirection: TextDirection.rtl,
             style: TextStyle(
               fontFamily: 'ScheherazadeNew',
-              fontSize: 16,
+              fontSize: fontSize - 6,
               color: AppTheme.secondary(isDark),
             ),
           ),
@@ -435,8 +452,9 @@ class _SpecialPageContent extends StatelessWidget {
   final List<Ayah> ayahs;
   final int pageNumber;
   final bool isDark;
+  final double fontSize;
   const _SpecialPageContent(
-      {required this.ayahs, required this.pageNumber, required this.isDark});
+      {required this.ayahs, required this.pageNumber, required this.isDark, required this.fontSize});
 
   String _toArabicNum(int n) {
     const d = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
@@ -459,7 +477,7 @@ class _SpecialPageContent extends StatelessWidget {
                 textDirection: TextDirection.rtl,
                 style: TextStyle(
                   fontFamily: 'ScheherazadeNew',
-                  fontSize: 26,
+                  fontSize: fontSize + 4,
                   color: AppTheme.quranText(isDark),
                   fontWeight: FontWeight.w600,
                 ),
@@ -471,7 +489,7 @@ class _SpecialPageContent extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontFamily: 'ScheherazadeNew',
-                  fontSize: 18,
+                  fontSize: fontSize - 2,
                   color: AppTheme.secondary(isDark),
                 ),
               ),
@@ -502,7 +520,7 @@ class _SpecialPageContent extends StatelessWidget {
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontFamily: 'ScheherazadeNew',
-                          fontSize: 28,
+                          fontSize: fontSize + 4,
                           height: 2.4,
                           color: AppTheme.quranText(isDark),
                         ),
@@ -526,6 +544,148 @@ class _SpecialPageContent extends StatelessWidget {
   }
 }
 
+// ─── Font size sheet ──────────────────────────────────────────────────────────
+class _FontSizeSheet extends StatelessWidget {
+  const _FontSizeSheet();
+
+  @override
+  Widget build(BuildContext context) {
+    final state = context.watch<AppState>();
+    final isDark = state.isDarkMode;
+    final l = L10n(state.locale);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: AppTheme.bg(isDark),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 40),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: AppTheme.divider(isDark),
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              Text(l.textSize,
+                  style: TextStyle(
+                      fontSize: 13, color: AppTheme.tertiary(isDark))),
+              const Spacer(),
+              Text(
+                state.quranFontSize.round().toString(),
+                style: TextStyle(
+                    fontSize: 13, color: AppTheme.secondary(isDark)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          SliderTheme(
+            data: SliderTheme.of(context).copyWith(
+              trackHeight: 2,
+              thumbShape:
+                  const RoundSliderThumbShape(enabledThumbRadius: 7),
+              overlayShape:
+                  const RoundSliderOverlayShape(overlayRadius: 14),
+              activeTrackColor: AppTheme.quranText(isDark),
+              inactiveTrackColor: AppTheme.divider(isDark),
+              thumbColor: AppTheme.quranText(isDark),
+              overlayColor:
+                  AppTheme.quranText(isDark).withValues(alpha: 0.1),
+            ),
+            child: Slider(
+              value: state.quranFontSize,
+              min: 18,
+              max: 60,
+              divisions: 42,
+              onChanged: (v) =>
+                  context.read<AppState>().setQuranFontSize(v),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ',
+            textDirection: TextDirection.rtl,
+            style: TextStyle(
+              fontFamily: 'ScheherazadeNew',
+              fontSize: state.quranFontSize,
+              color: AppTheme.quranText(isDark),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Localized surah name helper ─────────────────────────────────────────────
+const List<String> _surahNamesRu = [
+  'Аль-Фатиха', 'Аль-Бакара', 'Али Имран', 'Ан-Ниса', 'Аль-Маида',
+  'Аль-Анам', 'Аль-Араф', 'Аль-Анфал', 'Ат-Тауба', 'Юнус',
+  'Худ', 'Юсуф', 'Ар-Рад', 'Ибрахим', 'Аль-Хиджр',
+  'Ан-Нахл', 'Аль-Исра', 'Аль-Кахф', 'Марьям', 'Та Ха',
+  'Аль-Анбия', 'Аль-Хадж', 'Аль-Муминун', 'Ан-Нур', 'Аль-Фуркан',
+  'Аш-Шуара', 'Ан-Намль', 'Аль-Касас', 'Аль-Анкабут', 'Ар-Рум',
+  'Лукман', 'Ас-Саджда', 'Аль-Ахзаб', 'Саба', 'Фатыр',
+  'Ясин', 'Ас-Саффат', 'Сад', 'Аз-Зумар', 'Гафир',
+  'Фуссилат', 'Аш-Шура', 'Аз-Зухруф', 'Ад-Духан', 'Аль-Джасия',
+  'Аль-Ахкаф', 'Мухаммад', 'Аль-Фатх', 'Аль-Худжурат', 'Каф',
+  'Аз-Зарият', 'Ат-Тур', 'Ан-Наджм', 'Аль-Камар', 'Ар-Рахман',
+  'Аль-Вакиа', 'Аль-Хадид', 'Аль-Муджадала', 'Аль-Хашр', 'Аль-Мумтахана',
+  'Ас-Сафф', 'Аль-Джума', 'Аль-Мунафикун', 'Ат-Тагабун', 'Ат-Талак',
+  'Ат-Тахрим', 'Аль-Мульк', 'Аль-Калам', 'Аль-Хакка', 'Аль-Мааридж',
+  'Нух', 'Аль-Джинн', 'Аль-Муззаммиль', 'Аль-Муддассир', 'Аль-Кийама',
+  'Аль-Инсан', 'Аль-Мурсалат', 'Ан-Наба', 'Ан-Назиат', 'Абаса',
+  'Ат-Таквир', 'Аль-Инфитар', 'Аль-Мутаффифин', 'Аль-Иншикак', 'Аль-Бурудж',
+  'Ат-Тарик', 'Аль-Аля', 'Аль-Гашия', 'Аль-Фаджр', 'Аль-Балад',
+  'Аш-Шамс', 'Аль-Лайль', 'Ад-Духа', 'Аль-Инширах', 'Ат-Тин',
+  'Аль-Алак', 'Аль-Кадр', 'Аль-Баййина', 'Аз-Залзала', 'Аль-Адийат',
+  'Аль-Кариа', 'Ат-Такасур', 'Аль-Аср', 'Аль-Хумаза', 'Аль-Филь',
+  'Курайш', 'Аль-Маун', 'Аль-Каусар', 'Аль-Кафирун', 'Ан-Наср',
+  'Аль-Масад', 'Аль-Ихлас', 'Аль-Фалак', 'Ан-Нас',
+];
+
+const List<String> _surahNamesEn = [
+  'Al-Fatihah', 'Al-Baqarah', "Ali 'Imran", 'An-Nisa', "Al-Ma'idah",
+  "Al-An'am", "Al-A'raf", 'Al-Anfal', 'At-Tawbah', 'Yunus',
+  'Hud', 'Yusuf', "Ar-Ra'd", 'Ibrahim', 'Al-Hijr',
+  'An-Nahl', 'Al-Isra', 'Al-Kahf', 'Maryam', 'Ta-Ha',
+  'Al-Anbiya', 'Al-Hajj', "Al-Mu'minun", 'An-Nur', 'Al-Furqan',
+  "Ash-Shu'ara", 'An-Naml', 'Al-Qasas', "Al-'Ankabut", 'Ar-Rum',
+  'Luqman', 'As-Sajdah', 'Al-Ahzab', 'Saba', 'Fatir',
+  'Ya-Sin', 'As-Saffat', 'Sad', 'Az-Zumar', 'Ghafir',
+  'Fussilat', 'Ash-Shura', 'Az-Zukhruf', 'Ad-Dukhan', 'Al-Jathiyah',
+  'Al-Ahqaf', 'Muhammad', 'Al-Fath', 'Al-Hujurat', 'Qaf',
+  'Adh-Dhariyat', 'At-Tur', 'An-Najm', 'Al-Qamar', 'Ar-Rahman',
+  "Al-Waqi'ah", 'Al-Hadid', 'Al-Mujadila', 'Al-Hashr', 'Al-Mumtahanah',
+  'As-Saf', "Al-Jumu'ah", 'Al-Munafiqun', 'At-Taghabun', 'At-Talaq',
+  'At-Tahrim', 'Al-Mulk', 'Al-Qalam', 'Al-Haqqah', "Al-Ma'arij",
+  'Nuh', 'Al-Jinn', 'Al-Muzzammil', 'Al-Muddaththir', 'Al-Qiyamah',
+  'Al-Insan', 'Al-Mursalat', "An-Naba'", "An-Nazi'at", "'Abasa",
+  'At-Takwir', 'Al-Infitar', 'Al-Mutaffifin', 'Al-Inshiqaq', 'Al-Buruj',
+  'At-Tariq', "Al-A'la", 'Al-Ghashiyah', 'Al-Fajr', 'Al-Balad',
+  'Ash-Shams', 'Al-Layl', 'Ad-Duha', 'Ash-Sharh', 'At-Tin',
+  "Al-'Alaq", 'Al-Qadr', 'Al-Bayyinah', 'Az-Zalzalah', "Al-'Adiyat",
+  "Al-Qari'ah", 'At-Takathur', "Al-'Asr", 'Al-Humazah', 'Al-Fil',
+  'Quraysh', "Al-Ma'un", 'Al-Kawthar', 'Al-Kafirun', 'An-Nasr',
+  'Al-Masad', 'Al-Ikhlas', 'Al-Falaq', 'An-Nas',
+];
+
+String _localizedSurahName(int surahNumber, AppLocale locale) {
+  final i = surahNumber - 1;
+  switch (locale) {
+    case AppLocale.kk: return _surahPages[i].kazakh;
+    case AppLocale.ru: return _surahNamesRu[i];
+    case AppLocale.en: return _surahNamesEn[i];
+  }
+}
+
 // ─── Surah list ───────────────────────────────────────────────────────────────
 const List<({int surah, String arabic, String kazakh, int page})>
     _surahPages = [
@@ -546,7 +706,7 @@ const List<({int surah, String arabic, String kazakh, int page})>
   (surah: 15, arabic: 'الحجر', kazakh: 'Аль-Хижр', page: 262),
   (surah: 16, arabic: 'النحل', kazakh: 'Ан-Нахл', page: 267),
   (surah: 17, arabic: 'الإسراء', kazakh: 'Аль-Исра', page: 282),
-  (surah: 18, arabic: 'الكهф', kazakh: 'Аль-Кахф', page: 293),
+  (surah: 18, arabic: 'الكهف', kazakh: 'Аль-Кахф', page: 293),
   (surah: 19, arabic: 'مريم', kazakh: 'Марьям', page: 305),
   (surah: 20, arabic: 'طه', kazakh: 'Таха', page: 312),
   (surah: 21, arabic: 'الأنبياء', kazakh: 'Аль-Анбия', page: 322),
@@ -569,7 +729,7 @@ const List<({int surah, String arabic, String kazakh, int page})>
   (surah: 38, arabic: 'ص', kazakh: 'Сад', page: 453),
   (surah: 39, arabic: 'الزمر', kazakh: 'Аз-Зумар', page: 458),
   (surah: 40, arabic: 'غافر', kazakh: 'Ғафир', page: 467),
-  (surah: 41, arabic: 'فصلत', kazakh: 'Фуссылат', page: 477),
+  (surah: 41, arabic: 'فصلت', kazakh: 'Фуссылат', page: 477),
   (surah: 42, arabic: 'الشورى', kazakh: 'Аш-Шура', page: 483),
   (surah: 43, arabic: 'الزخرف', kazakh: 'Аз-Зухруф', page: 489),
   (surah: 44, arabic: 'الدخان', kazakh: 'Ад-Духан', page: 496),
@@ -588,14 +748,14 @@ const List<({int surah, String arabic, String kazakh, int page})>
   (surah: 57, arabic: 'الحديد', kazakh: 'Аль-Хадид', page: 537),
   (surah: 58, arabic: 'المجادلة', kazakh: 'Аль-Мужадала', page: 542),
   (surah: 59, arabic: 'الحشر', kazakh: 'Аль-Хашр', page: 545),
-  (surah: 60, arabic: 'المмтахна', kazakh: 'Аль-Мумтахина', page: 549),
+  (surah: 60, arabic: 'الممتحنة', kazakh: 'Аль-Мумтахина', page: 549),
   (surah: 61, arabic: 'الصف', kazakh: 'Ас-Саф', page: 551),
   (surah: 62, arabic: 'الجمعة', kazakh: 'Аль-Жұма', page: 553),
-  (surah: 63, arabic: 'المнафиқун', kazakh: 'Аль-Мунафиқун', page: 554),
+  (surah: 63, arabic: 'المنافقون', kazakh: 'Аль-Мунафиқун', page: 554),
   (surah: 64, arabic: 'التغابن', kazakh: 'Ат-Тағабун', page: 556),
   (surah: 65, arabic: 'الطلاق', kazakh: 'Ат-Талақ', page: 558),
   (surah: 66, arabic: 'التحريم', kazakh: 'Ат-Тахрим', page: 560),
-  (surah: 67, arabic: 'الملк', kazakh: 'Аль-Мүлк', page: 562),
+  (surah: 67, arabic: 'الملك', kazakh: 'Аль-Мүлк', page: 562),
   (surah: 68, arabic: 'القلم', kazakh: 'Аль-Қалам', page: 564),
   (surah: 69, arabic: 'الحاقة', kazakh: 'Аль-Хаққа', page: 566),
   (surah: 70, arabic: 'المعارج', kazakh: 'Аль-Мағариж', page: 568),
@@ -607,18 +767,18 @@ const List<({int surah, String arabic, String kazakh, int page})>
   (surah: 76, arabic: 'الإنسان', kazakh: 'Аль-Инсан', page: 578),
   (surah: 77, arabic: 'المرسلات', kazakh: 'Аль-Мурсалат', page: 580),
   (surah: 78, arabic: 'النبأ', kazakh: 'Ан-Наба', page: 582),
-  (surah: 79, arabic: 'الназиғат', kazakh: 'Ан-Назиғат', page: 583),
+  (surah: 79, arabic: 'النازعات', kazakh: 'Ан-Назиғат', page: 583),
   (surah: 80, arabic: 'عبس', kazakh: 'Абаса', page: 585),
   (surah: 81, arabic: 'التكوير', kazakh: 'Ат-Таквир', page: 586),
-  (surah: 82, arabic: 'الинфитар', kazakh: 'Аль-Инфитар', page: 587),
+  (surah: 82, arabic: 'الانفطار', kazakh: 'Аль-Инфитар', page: 587),
   (surah: 83, arabic: 'المطففين', kazakh: 'Аль-Мутаффифин', page: 587),
-  (surah: 84, arabic: 'الإنшиқақ', kazakh: 'Аль-Иншиқақ', page: 589),
+  (surah: 84, arabic: 'الانشقاق', kazakh: 'Аль-Иншиқақ', page: 589),
   (surah: 85, arabic: 'البروج', kazakh: 'Аль-Бурудж', page: 590),
   (surah: 86, arabic: 'الطارق', kazakh: 'Ат-Тарық', page: 591),
   (surah: 87, arabic: 'الأعلى', kazakh: 'Аль-Ағла', page: 591),
   (surah: 88, arabic: 'الغاشية', kazakh: 'Аль-Ғашия', page: 592),
   (surah: 89, arabic: 'الفجر', kazakh: 'Аль-Фажр', page: 593),
-  (surah: 90, arabic: 'البلд', kazakh: 'Аль-Балад', page: 594),
+  (surah: 90, arabic: 'البلد', kazakh: 'Аль-Балад', page: 594),
   (surah: 91, arabic: 'الشمس', kazakh: 'Аш-Шамс', page: 595),
   (surah: 92, arabic: 'الليل', kazakh: 'Аль-Ләйл', page: 595),
   (surah: 93, arabic: 'الضحى', kazakh: 'Ад-Духа', page: 596),
@@ -627,7 +787,7 @@ const List<({int surah, String arabic, String kazakh, int page})>
   (surah: 96, arabic: 'العلق', kazakh: 'Аль-Алақ', page: 597),
   (surah: 97, arabic: 'القدر', kazakh: 'Аль-Қадр', page: 598),
   (surah: 98, arabic: 'البينة', kazakh: 'Аль-Баййина', page: 598),
-  (surah: 99, arabic: 'الزلзле', kazakh: 'Аз-Зилзал', page: 599),
+  (surah: 99, arabic: 'الزلزلة', kazakh: 'Аз-Зилзал', page: 599),
   (surah: 100, arabic: 'العاديات', kazakh: 'Аль-Адият', page: 599),
   (surah: 101, arabic: 'القارعة', kazakh: 'Аль-Қариа', page: 600),
   (surah: 102, arabic: 'التكاثر', kazakh: 'Ат-Такасур', page: 600),
@@ -639,7 +799,7 @@ const List<({int surah, String arabic, String kazakh, int page})>
   (surah: 108, arabic: 'الكوثر', kazakh: 'Аль-Кәусар', page: 602),
   (surah: 109, arabic: 'الكافرون', kazakh: 'Аль-Кафирун', page: 603),
   (surah: 110, arabic: 'النصر', kazakh: 'Ан-Наср', page: 603),
-  (surah: 111, arabic: 'المسд', kazakh: 'Аль-Масад', page: 603),
+  (surah: 111, arabic: 'المسد', kazakh: 'Аль-Масад', page: 603),
   (surah: 112, arabic: 'الإخلاص', kazakh: 'Аль-Ихлас', page: 604),
   (surah: 113, arabic: 'الفلق', kazakh: 'Аль-Фалақ', page: 604),
   (surah: 114, arabic: 'الناس', kazakh: 'Ан-Нас', page: 604),
@@ -666,16 +826,20 @@ class _SurahPickerSheetState extends State<_SurahPickerSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final state = context.watch<AppState>();
+    final isDark = state.isDarkMode;
+    final l = L10n(state.locale);
+
     final filtered = _query.isEmpty
         ? _surahPages
         : _surahPages
             .where((s) =>
-                s.kazakh.toLowerCase().contains(_query.toLowerCase()) ||
+                _localizedSurahName(s.surah, state.locale)
+                    .toLowerCase()
+                    .contains(_query.toLowerCase()) ||
                 s.arabic.contains(_query) ||
                 s.surah.toString() == _query)
             .toList();
-
-    final isDark = context.watch<AppState>().isDarkMode;
 
     return Container(
       height: MediaQuery.of(context).size.height * 0.85,
@@ -697,7 +861,7 @@ class _SurahPickerSheetState extends State<_SurahPickerSheet> {
           Padding(
             padding: const EdgeInsets.only(bottom: 12),
             child: Text(
-              'Сүре таңдау',
+              l.chooseSurah,
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
@@ -716,8 +880,8 @@ class _SurahPickerSheetState extends State<_SurahPickerSheet> {
                 controller: _search,
                 onChanged: (v) => setState(() => _query = v),
                 style: const TextStyle(fontSize: 15),
-                decoration: const InputDecoration(
-                  hintText: 'Іздеу...',
+                decoration: InputDecoration(
+                  hintText: l.search,
                   hintStyle: TextStyle(color: Color(0xFFBBBBBB)),
                   prefixIcon: Icon(Icons.search_rounded,
                       color: Color(0xFFBBBBBB), size: 20),
@@ -750,7 +914,7 @@ class _SurahPickerSheetState extends State<_SurahPickerSheet> {
                         ),
                         const SizedBox(width: 14),
                         Expanded(
-                          child: Text(s.kazakh,
+                          child: Text(_localizedSurahName(s.surah, state.locale),
                               style: TextStyle(
                                   fontSize: 15,
                                   color: AppTheme.primary(isDark))),

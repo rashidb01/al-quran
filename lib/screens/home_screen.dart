@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/app_state.dart';
 import '../models/ayah.dart';
 import '../theme.dart';
+import '../l10n.dart';
 import 'count_input_screen.dart';
 import 'quran_viewer_screen.dart';
 
@@ -44,10 +45,19 @@ class _HomeScreenState extends State<HomeScreen>
         context, MaterialPageRoute(builder: (_) => const QuranViewerScreen()));
   }
 
+  void _showSettings() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (_) => const _SettingsSheet(),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
     final isDark = state.isDarkMode;
+    final l = L10n(state.locale);
     final hasAyahs = state.selectedAyahs.isNotEmpty;
 
     return GestureDetector(
@@ -65,7 +75,6 @@ class _HomeScreenState extends State<HomeScreen>
                 padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
                 child: Row(
                   children: [
-                    // Dark mode toggle — top left
                     GestureDetector(
                       onTap: () => context.read<AppState>().toggleDarkMode(),
                       child: Icon(
@@ -78,7 +87,7 @@ class _HomeScreenState extends State<HomeScreen>
                     ),
                     const SizedBox(width: 16),
                     Text(
-                      'Al Quran',
+                      'Sanaq Quran',
                       style: TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.w600,
@@ -87,10 +96,7 @@ class _HomeScreenState extends State<HomeScreen>
                     ),
                     const Spacer(),
                     GestureDetector(
-                      onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (_) => const CountInputScreen())),
+                      onTap: _showSettings,
                       child: Icon(Icons.tune_rounded,
                           size: 20, color: AppTheme.tertiary(isDark)),
                     ),
@@ -98,69 +104,10 @@ class _HomeScreenState extends State<HomeScreen>
                 ),
               ),
 
-              // Counter tap area
-              Expanded(
-                flex: hasAyahs ? 2 : 3,
-                child: GestureDetector(
-                  onTap: _increment,
-                  behavior: HitTestBehavior.opaque,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      AnimatedOpacity(
-                        opacity: state.goalReached ? 1.0 : 0.0,
-                        duration: const Duration(milliseconds: 300),
-                        child: GestureDetector(
-                          onTap: () => context.read<AppState>().dismissGoal(),
-                          child: Padding(
-                            padding: const EdgeInsets.only(bottom: 14),
-                            child: Text('✓ Мақсат орындалды',
-                                style: TextStyle(
-                                    fontSize: 13,
-                                    color: AppTheme.secondary(isDark))),
-                          ),
-                        ),
-                      ),
-                      ScaleTransition(
-                        scale: _scaleAnim,
-                        child: Text(
-                          '${state.counter}',
-                          style: TextStyle(
-                            fontSize: hasAyahs ? 80 : 120,
-                            fontWeight: FontWeight.w200,
-                            color: AppTheme.primary(isDark),
-                            height: 1,
-                          ),
-                        ),
-                      ),
-                      if (state.sanaqCount > 0)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 8),
-                          child: Text('/ ${state.sanaqCount}',
-                              style: TextStyle(
-                                  fontSize: 14,
-                                  color: AppTheme.tertiary(isDark))),
-                        ),
-                    ],
-                  ),
-                ),
-              ),
-
-              // Reset
-              Padding(
-                padding: const EdgeInsets.fromLTRB(24, 0, 0, 16),
-                child: GestureDetector(
-                  onTap: () => context.read<AppState>().resetCounter(),
-                  child: Icon(Icons.refresh_rounded,
-                      size: 18, color: AppTheme.tertiary(isDark)),
-                ),
-              ),
-
               // Ayahs list
               if (hasAyahs) ...[
                 Container(height: 1, color: AppTheme.divider(isDark)),
                 Expanded(
-                  flex: 3,
                   child: Builder(builder: (ctx) {
                     final sorted = [...state.selectedAyahs]
                       ..sort((a, b) => a.id.compareTo(b.id));
@@ -174,30 +121,275 @@ class _HomeScreenState extends State<HomeScreen>
                     );
                   }),
                 ),
-              ],
+              ] else
+                const Spacer(),
 
-              // Open Quran
-              Container(height: 1, color: AppTheme.divider(isDark)),
-              GestureDetector(
-                onTap: _openQuran,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 16, 24, 20),
-                  child: Row(
-                    children: [
-                      Text('Құранды оқу',
-                          style: TextStyle(
-                              fontSize: 15,
-                              color: AppTheme.secondary(isDark))),
-                      const SizedBox(width: 4),
-                      Icon(Icons.arrow_forward_ios_rounded,
-                          size: 11, color: AppTheme.tertiary(isDark)),
-                    ],
+              // Counter button
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 12, 24, 8),
+                child: GestureDetector(
+                  onTap: _increment,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                          color: AppTheme.divider(isDark), width: 1.5),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 28),
+                    child: Column(
+                      children: [
+                        AnimatedOpacity(
+                          opacity: state.goalReached ? 1.0 : 0.0,
+                          duration: const Duration(milliseconds: 300),
+                          child: GestureDetector(
+                            onTap: () => context.read<AppState>().dismissGoal(),
+                            child: Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: Text(l.goalReached,
+                                  style: TextStyle(
+                                      fontSize: 13,
+                                      color: AppTheme.secondary(isDark))),
+                            ),
+                          ),
+                        ),
+                        ScaleTransition(
+                          scale: _scaleAnim,
+                          child: Text(
+                            '${state.counter}',
+                            style: TextStyle(
+                              fontSize: 96,
+                              fontWeight: FontWeight.w200,
+                              color: AppTheme.primary(isDark),
+                              height: 1,
+                            ),
+                          ),
+                        ),
+                        if (state.sanaqCount > 0)
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(2),
+                                    child: LinearProgressIndicator(
+                                      value: (state.counter / state.sanaqCount)
+                                          .clamp(0.0, 1.0),
+                                      minHeight: 3,
+                                      backgroundColor:
+                                          AppTheme.divider(isDark),
+                                      valueColor:
+                                          AlwaysStoppedAnimation<Color>(
+                                              AppTheme.secondary(isDark)),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Text(
+                                  '${state.sanaqCount}',
+                                  style: TextStyle(
+                                      fontSize: 13,
+                                      color: AppTheme.tertiary(isDark)),
+                                ),
+                              ],
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
+                ),
+              ),
+
+              // Reset + Open Quran
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 4, 24, 16),
+                child: Row(
+                  children: [
+                    GestureDetector(
+                      onTap: () => context.read<AppState>().resetCounter(),
+                      child: Icon(Icons.refresh_rounded,
+                          size: 18, color: AppTheme.tertiary(isDark)),
+                    ),
+                    const Spacer(),
+                    GestureDetector(
+                      onTap: _openQuran,
+                      child: Row(
+                        children: [
+                          Text(l.openQuran,
+                              style: TextStyle(
+                                  fontSize: 15,
+                                  color: AppTheme.secondary(isDark))),
+                          const SizedBox(width: 4),
+                          Icon(Icons.arrow_forward_ios_rounded,
+                              size: 11, color: AppTheme.tertiary(isDark)),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+// ─── Settings bottom sheet ────────────────────────────────────────────────────
+class _SettingsSheet extends StatelessWidget {
+  const _SettingsSheet();
+
+  @override
+  Widget build(BuildContext context) {
+    final state = context.watch<AppState>();
+    final isDark = state.isDarkMode;
+    final l = L10n(state.locale);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: AppTheme.bg(isDark),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 40),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppTheme.divider(isDark),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // Sanaq count
+          GestureDetector(
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(context,
+                  MaterialPageRoute(builder: (_) => const CountInputScreen()));
+            },
+            child: Row(
+              children: [
+                Text(l.sanaqGoal,
+                    style: TextStyle(
+                        fontSize: 13, color: AppTheme.tertiary(isDark))),
+                const Spacer(),
+                Text(
+                  '${state.sanaqCount}',
+                  style: TextStyle(
+                      fontSize: 15, color: AppTheme.secondary(isDark)),
+                ),
+                const SizedBox(width: 6),
+                Icon(Icons.chevron_right_rounded,
+                    size: 18, color: AppTheme.tertiary(isDark)),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 24),
+          Container(height: 1, color: AppTheme.divider(isDark)),
+          const SizedBox(height: 24),
+
+          // Language
+          Text(l.language,
+              style: TextStyle(
+                  fontSize: 13, color: AppTheme.tertiary(isDark))),
+          const SizedBox(height: 12),
+          Row(
+            children: AppLocale.values.map((loc) {
+              final selected = state.locale == loc;
+              return Padding(
+                padding: const EdgeInsets.only(right: 10),
+                child: GestureDetector(
+                  onTap: () => context.read<AppState>().setLocale(loc),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 18, vertical: 10),
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: selected
+                            ? AppTheme.primary(isDark)
+                            : AppTheme.divider(isDark),
+                        width: selected ? 1.5 : 1,
+                      ),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      L10n(loc).label,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: selected
+                            ? FontWeight.w600
+                            : FontWeight.w400,
+                        color: selected
+                            ? AppTheme.primary(isDark)
+                            : AppTheme.secondary(isDark),
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+
+          const SizedBox(height: 28),
+
+          // Font size
+          Row(
+            children: [
+              Text(l.textSize,
+                  style: TextStyle(
+                      fontSize: 13, color: AppTheme.tertiary(isDark))),
+              const Spacer(),
+              Text(
+                state.quranFontSize.round().toString(),
+                style: TextStyle(
+                    fontSize: 13, color: AppTheme.secondary(isDark)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          SliderTheme(
+            data: SliderTheme.of(context).copyWith(
+              trackHeight: 2,
+              thumbShape:
+                  const RoundSliderThumbShape(enabledThumbRadius: 7),
+              overlayShape:
+                  const RoundSliderOverlayShape(overlayRadius: 14),
+              activeTrackColor: AppTheme.primary(isDark),
+              inactiveTrackColor: AppTheme.divider(isDark),
+              thumbColor: AppTheme.primary(isDark),
+              overlayColor: AppTheme.primary(isDark).withValues(alpha: 0.1),
+            ),
+            child: Slider(
+              value: state.quranFontSize,
+              min: 18,
+              max: 60,
+              divisions: 42,
+              onChanged: (v) =>
+                  context.read<AppState>().setQuranFontSize(v),
+            ),
+          ),
+          // Preview
+          Center(
+            child: Text(
+              'بِسْمِ اللَّهِ',
+              textDirection: TextDirection.rtl,
+              style: TextStyle(
+                fontFamily: 'ScheherazadeNew',
+                fontSize: state.quranFontSize,
+                color: AppTheme.primary(isDark),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -210,6 +402,7 @@ class _AyahRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final fontSize = context.watch<AppState>().quranFontSize;
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 12, 24, 12),
       child: Row(
@@ -232,7 +425,7 @@ class _AyahRow extends StatelessWidget {
                   textAlign: TextAlign.right,
                   style: TextStyle(
                     fontFamily: 'ScheherazadeNew',
-                    fontSize: 20,
+                    fontSize: fontSize,
                     height: 1.8,
                     color: AppTheme.primary(isDark),
                   ),

@@ -39,7 +39,7 @@ class _SplashScreenState extends State<SplashScreen> {
       backgroundColor: Colors.white,
       body: Center(
         child: Text(
-          'Al Quran',
+          'Sanaq Quran',
           style: TextStyle(
             fontSize: 32,
             fontWeight: FontWeight.w700,
