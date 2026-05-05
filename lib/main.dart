@@ -52,7 +52,7 @@ class _AlQuranAppState extends State<AlQuranApp> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => AppState()..init(),
+      create: (_) => AppState(),
       child: Consumer<AppState>(
         builder: (context, state, _) {
           SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(

@@ -293,22 +293,24 @@ class _LinesContainer extends StatelessWidget {
     int? lastSurah;
     List<Ayah> cur = [];
 
-    void flush(String name) {
+    void flush(int surahNum, String name) {
       if (cur.isEmpty) return;
-      groups.add(_AyahGroup(surahName: name, ayahs: List.from(cur)));
+      groups.add(_AyahGroup(surahNumber: surahNum, surahName: name, ayahs: List.from(cur)));
       cur = [];
     }
 
+    int lastSurahNum = 0;
     String lastName = '';
     for (final ayah in ayahs) {
       if (ayah.surahNumber != lastSurah) {
-        flush(lastName);
+        flush(lastSurahNum, lastName);
         lastSurah = ayah.surahNumber;
+        lastSurahNum = ayah.surahNumber;
         lastName = ayah.surahName;
       }
       cur.add(ayah);
     }
-    flush(lastName);
+    flush(lastSurahNum, lastName);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
@@ -318,19 +320,27 @@ class _LinesContainer extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             for (int gi = 0; gi < groups.length; gi++) ...[
-              if (gi > 0) _MidPageBanner(surahName: groups[gi].surahName, isDark: isDark, fontSize: fontSize),
+              if (groups[gi].ayahs.first.verseNumber == 1)
+                _MidPageBanner(
+                  surahName: groups[gi].surahName,
+                  isDark: isDark,
+                  fontSize: fontSize,
+                  showBasmala: groups[gi].surahNumber != 1 && groups[gi].surahNumber != 9,
+                ),
               Directionality(
                 textDirection: TextDirection.rtl,
                 child: Text.rich(
                   TextSpan(
+                    style: TextStyle(
+                      fontFamily: 'ScheherazadeNew',
+                      fontSize: fontSize,
+                      height: 2.2,
+                    ),
                     children: [
                       for (var ayah in groups[gi].ayahs) ...[
                         TextSpan(
                           text: ayah.textUthmani,
                           style: TextStyle(
-                            fontFamily: 'ScheherazadeNew',
-                            fontSize: fontSize,
-                            height: 2.2,
                             color: AppTheme.quranText(isDark),
                             backgroundColor: state.selectedAyahIds.contains(ayah.id)
                                 ? AppTheme.selected(isDark)
@@ -366,9 +376,10 @@ class _LinesContainer extends StatelessWidget {
 }
 
 class _AyahGroup {
+  final int surahNumber;
   final String surahName;
   final List<Ayah> ayahs;
-  const _AyahGroup({required this.surahName, required this.ayahs});
+  const _AyahGroup({required this.surahNumber, required this.surahName, required this.ayahs});
 }
 
 // ─── Ornamental verse-end marker ─────────────────────────────────────────────
@@ -413,7 +424,8 @@ class _MidPageBanner extends StatelessWidget {
   final String surahName;
   final bool isDark;
   final double fontSize;
-  const _MidPageBanner({required this.surahName, required this.isDark, required this.fontSize});
+  final bool showBasmala;
+  const _MidPageBanner({required this.surahName, required this.isDark, required this.fontSize, required this.showBasmala});
 
   @override
   Widget build(BuildContext context) {
@@ -431,16 +443,18 @@ class _MidPageBanner extends StatelessWidget {
               fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 4),
-          Text(
-            'بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ',
-            textDirection: TextDirection.rtl,
-            style: TextStyle(
-              fontFamily: 'ScheherazadeNew',
-              fontSize: fontSize - 6,
-              color: AppTheme.secondary(isDark),
+          if (showBasmala) ...[
+            const SizedBox(height: 4),
+            Text(
+              'بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ',
+              textDirection: TextDirection.rtl,
+              style: TextStyle(
+                fontFamily: 'ScheherazadeNew',
+                fontSize: fontSize - 6,
+                color: AppTheme.secondary(isDark),
+              ),
             ),
-          ),
+          ],
         ],
       ),
     );
@@ -482,17 +496,19 @@ class _SpecialPageContent extends StatelessWidget {
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              const SizedBox(height: 8),
-              Text(
-                'بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ',
-                textDirection: TextDirection.rtl,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontFamily: 'ScheherazadeNew',
-                  fontSize: fontSize - 2,
-                  color: AppTheme.secondary(isDark),
+              if (pageNumber != 1) ...[
+                const SizedBox(height: 8),
+                Text(
+                  'بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ',
+                  textDirection: TextDirection.rtl,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontFamily: 'ScheherazadeNew',
+                    fontSize: fontSize - 2,
+                    color: AppTheme.secondary(isDark),
+                  ),
                 ),
-              ),
+              ],
             ],
           ),
           const SizedBox(height: 24),
@@ -689,120 +705,120 @@ String _localizedSurahName(int surahNumber, AppLocale locale) {
 // ─── Surah list ───────────────────────────────────────────────────────────────
 const List<({int surah, String arabic, String kazakh, int page})>
     _surahPages = [
-  (surah: 1, arabic: 'الفاتحة', kazakh: 'Аль-Фатиха', page: 1),
-  (surah: 2, arabic: 'البقرة', kazakh: 'Аль-Бакара', page: 2),
+  (surah: 1, arabic: 'الفاتحة', kazakh: 'Әль-Фатихаһ', page: 1),
+  (surah: 2, arabic: 'البقرة', kazakh: 'Әль-Бақараһ', page: 2),
   (surah: 3, arabic: 'آل عمران', kazakh: 'Әли Имран', page: 50),
-  (surah: 4, arabic: 'النساء', kazakh: 'Ан-Ниса', page: 77),
-  (surah: 5, arabic: 'المائدة', kazakh: 'Аль-Мәида', page: 106),
-  (surah: 6, arabic: 'الأنعام', kazakh: 'Аль-Анғам', page: 128),
-  (surah: 7, arabic: 'الأعراف', kazakh: 'Аль-Ағраф', page: 151),
-  (surah: 8, arabic: 'الأنفال', kazakh: 'Аль-Анфал', page: 177),
-  (surah: 9, arabic: 'التوبة', kazakh: 'Ат-Тәуба', page: 187),
+  (surah: 4, arabic: 'النساء', kazakh: 'Ән-Ниса', page: 77),
+  (surah: 5, arabic: 'المائدة', kazakh: 'Әль-Мәидаһ', page: 106),
+  (surah: 6, arabic: 'الأنعام', kazakh: 'Әль-Анғам', page: 128),
+  (surah: 7, arabic: 'الأعراف', kazakh: 'Әль-Ағраф', page: 151),
+  (surah: 8, arabic: 'الأنفال', kazakh: 'Әль-Анфал', page: 177),
+  (surah: 9, arabic: 'التوبة', kazakh: 'Әт-Тәуба', page: 187),
   (surah: 10, arabic: 'يونس', kazakh: 'Юнус', page: 208),
   (surah: 11, arabic: 'هود', kazakh: 'Худ', page: 221),
-  (surah: 12, arabic: 'يوسف', kazakh: 'Жүсіп', page: 235),
-  (surah: 13, arabic: 'الرعد', kazakh: 'Ар-Ражд', page: 249),
+  (surah: 12, arabic: 'يوسف', kazakh: 'Йусуф', page: 235),
+  (surah: 13, arabic: 'الرعد', kazakh: 'Әр-Рағд', page: 249),
   (surah: 14, arabic: 'إبراهيم', kazakh: 'Ибраhим', page: 255),
-  (surah: 15, arabic: 'الحجر', kazakh: 'Аль-Хижр', page: 262),
-  (surah: 16, arabic: 'النحل', kazakh: 'Ан-Нахл', page: 267),
-  (surah: 17, arabic: 'الإسراء', kazakh: 'Аль-Исра', page: 282),
-  (surah: 18, arabic: 'الكهف', kazakh: 'Аль-Кахф', page: 293),
-  (surah: 19, arabic: 'مريم', kazakh: 'Марьям', page: 305),
+  (surah: 15, arabic: 'الحجر', kazakh: 'Әль-Хижр', page: 262),
+  (surah: 16, arabic: 'النحل', kazakh: 'Ән-Нахл', page: 267),
+  (surah: 17, arabic: 'الإسراء', kazakh: 'Әль-Исра', page: 282),
+  (surah: 18, arabic: 'الكهف', kazakh: 'Әль-Кахф', page: 293),
+  (surah: 19, arabic: 'مريم', kazakh: 'Мәрьям', page: 305),
   (surah: 20, arabic: 'طه', kazakh: 'Таха', page: 312),
-  (surah: 21, arabic: 'الأنبياء', kazakh: 'Аль-Анбия', page: 322),
-  (surah: 22, arabic: 'الحج', kazakh: 'Аль-Хаж', page: 332),
-  (surah: 23, arabic: 'المؤمنون', kazakh: 'Аль-Мүминун', page: 342),
-  (surah: 24, arabic: 'النور', kazakh: 'Ан-Нур', page: 350),
-  (surah: 25, arabic: 'الفرقان', kazakh: 'Аль-Фурқан', page: 359),
-  (surah: 26, arabic: 'الشعراء', kazakh: 'Аш-Шуара', page: 367),
-  (surah: 27, arabic: 'النمل', kazakh: 'Ан-Намл', page: 377),
-  (surah: 28, arabic: 'القصص', kazakh: 'Аль-Қасас', page: 385),
-  (surah: 29, arabic: 'العنكبوت', kazakh: 'Аль-Анкабут', page: 396),
-  (surah: 30, arabic: 'الروم', kazakh: 'Ар-Рум', page: 404),
+  (surah: 21, arabic: 'الأنبياء', kazakh: 'Әль-Әнбия', page: 322),
+  (surah: 22, arabic: 'الحج', kazakh: 'Әль-Хаж', page: 332),
+  (surah: 23, arabic: 'المؤمنون', kazakh: 'Әль-Мүминун', page: 342),
+  (surah: 24, arabic: 'النور', kazakh: 'Ән-Нур', page: 350),
+  (surah: 25, arabic: 'الفرقان', kazakh: 'Әль-Фурқан', page: 359),
+  (surah: 26, arabic: 'الشعراء', kazakh: 'Әш-Шуғаро', page: 367),
+  (surah: 27, arabic: 'النمل', kazakh: 'Ән-Намл', page: 377),
+  (surah: 28, arabic: 'القصص', kazakh: 'Әль-Қасас', page: 385),
+  (surah: 29, arabic: 'العنكبوت', kazakh: 'Әль-Анкабут', page: 396),
+  (surah: 30, arabic: 'الروم', kazakh: 'Әр-Рум', page: 404),
   (surah: 31, arabic: 'لقمان', kazakh: 'Луқман', page: 411),
-  (surah: 32, arabic: 'السجدة', kazakh: 'Ас-Сажда', page: 415),
-  (surah: 33, arabic: 'الأحزاب', kazakh: 'Аль-Ахзаб', page: 418),
+  (surah: 32, arabic: 'السجدة', kazakh: 'Әс-Саждәһ', page: 415),
+  (surah: 33, arabic: 'الأحزاب', kazakh: 'Әль-Әхзаб', page: 418),
   (surah: 34, arabic: 'سبإ', kazakh: 'Саба', page: 428),
   (surah: 35, arabic: 'فاطر', kazakh: 'Фатыр', page: 434),
   (surah: 36, arabic: 'يس', kazakh: 'Ясин', page: 440),
-  (surah: 37, arabic: 'الصافات', kazakh: 'Ас-Саффат', page: 446),
-  (surah: 38, arabic: 'ص', kazakh: 'Сад', page: 453),
-  (surah: 39, arabic: 'الزمر', kazakh: 'Аз-Зумар', page: 458),
-  (surah: 40, arabic: 'غافر', kazakh: 'Ғафир', page: 467),
-  (surah: 41, arabic: 'فصلت', kazakh: 'Фуссылат', page: 477),
-  (surah: 42, arabic: 'الشورى', kazakh: 'Аш-Шура', page: 483),
-  (surah: 43, arabic: 'الزخرف', kazakh: 'Аз-Зухруф', page: 489),
-  (surah: 44, arabic: 'الدخان', kazakh: 'Ад-Духан', page: 496),
-  (surah: 45, arabic: 'الجاثية', kazakh: 'Аль-Жасия', page: 499),
-  (surah: 46, arabic: 'الأحقاف', kazakh: 'Аль-Ахқаф', page: 502),
+  (surah: 37, arabic: 'الصافات', kazakh: 'Әс-Соффат', page: 446),
+  (surah: 38, arabic: 'ص', kazakh: 'Сод', page: 453),
+  (surah: 39, arabic: 'الزمر', kazakh: 'Әз-Зумар', page: 458),
+  (surah: 40, arabic: 'غافر', kazakh: 'Ғофир', page: 467),
+  (surah: 41, arabic: 'فصلت', kazakh: 'Фуссыләт', page: 477),
+  (surah: 42, arabic: 'الشورى', kazakh: 'Әш-Шура', page: 483),
+  (surah: 43, arabic: 'الزخرف', kazakh: 'Әз-Зухруф', page: 489),
+  (surah: 44, arabic: 'الدخان', kazakh: 'Әд-Духан', page: 496),
+  (surah: 45, arabic: 'الجاثية', kazakh: 'Әль-Жәсияһ', page: 499),
+  (surah: 46, arabic: 'الأحقاف', kazakh: 'Әль-Әхқаф', page: 502),
   (surah: 47, arabic: 'محمد', kazakh: 'Мухаммад', page: 507),
-  (surah: 48, arabic: 'الفتح', kazakh: 'Аль-Фатх', page: 511),
-  (surah: 49, arabic: 'الحجرات', kazakh: 'Аль-Хужурат', page: 515),
-  (surah: 50, arabic: 'ق', kazakh: 'Қаф', page: 518),
-  (surah: 51, arabic: 'الذاريات', kazakh: 'Аз-Зарият', page: 520),
-  (surah: 52, arabic: 'الطور', kazakh: 'Ат-Тур', page: 523),
-  (surah: 53, arabic: 'النجم', kazakh: 'Ан-Нажм', page: 526),
-  (surah: 54, arabic: 'القمر', kazakh: 'Аль-Қамар', page: 528),
-  (surah: 55, arabic: 'الرحمن', kazakh: 'Ар-Рахман', page: 531),
-  (surah: 56, arabic: 'الواقعة', kazakh: 'Аль-Уақиа', page: 534),
-  (surah: 57, arabic: 'الحديد', kazakh: 'Аль-Хадид', page: 537),
-  (surah: 58, arabic: 'المجادلة', kazakh: 'Аль-Мужадала', page: 542),
-  (surah: 59, arabic: 'الحشر', kazakh: 'Аль-Хашр', page: 545),
-  (surah: 60, arabic: 'الممتحنة', kazakh: 'Аль-Мумтахина', page: 549),
-  (surah: 61, arabic: 'الصف', kazakh: 'Ас-Саф', page: 551),
-  (surah: 62, arabic: 'الجمعة', kazakh: 'Аль-Жұма', page: 553),
-  (surah: 63, arabic: 'المنافقون', kazakh: 'Аль-Мунафиқун', page: 554),
-  (surah: 64, arabic: 'التغابن', kazakh: 'Ат-Тағабун', page: 556),
-  (surah: 65, arabic: 'الطلاق', kazakh: 'Ат-Талақ', page: 558),
-  (surah: 66, arabic: 'التحريم', kazakh: 'Ат-Тахрим', page: 560),
-  (surah: 67, arabic: 'الملك', kazakh: 'Аль-Мүлк', page: 562),
-  (surah: 68, arabic: 'القلم', kazakh: 'Аль-Қалам', page: 564),
-  (surah: 69, arabic: 'الحاقة', kazakh: 'Аль-Хаққа', page: 566),
-  (surah: 70, arabic: 'المعارج', kazakh: 'Аль-Мағариж', page: 568),
+  (surah: 48, arabic: 'الفتح', kazakh: 'Әль-Фатх', page: 511),
+  (surah: 49, arabic: 'الحجرات', kazakh: 'Әль-Хужурат', page: 515),
+  (surah: 50, arabic: 'ق', kazakh: 'Қоф', page: 518),
+  (surah: 51, arabic: 'الذاريات', kazakh: 'Әз-Зәрият', page: 520),
+  (surah: 52, arabic: 'الطور', kazakh: 'Әт-Тур', page: 523),
+  (surah: 53, arabic: 'النجم', kazakh: 'Ән-Нажм', page: 526),
+  (surah: 54, arabic: 'القمر', kazakh: 'Әль-Қомар', page: 528),
+  (surah: 55, arabic: 'الرحمن', kazakh: 'Әр-Рохман', page: 531),
+  (surah: 56, arabic: 'الواقعة', kazakh: 'Әль-Уақиғаһ', page: 534),
+  (surah: 57, arabic: 'الحديد', kazakh: 'Әль-Хадид', page: 537),
+  (surah: 58, arabic: 'المجادلة', kazakh: 'Әль-Мужадалаһ', page: 542),
+  (surah: 59, arabic: 'الحشر', kazakh: 'Әль-Хашр', page: 545),
+  (surah: 60, arabic: 'الممتحنة', kazakh: 'Әль-Мумтахина', page: 549),
+  (surah: 61, arabic: 'الصف', kazakh: 'Әс-Соф', page: 551),
+  (surah: 62, arabic: 'الجمعة', kazakh: 'Әль-Жұмуға', page: 553),
+  (surah: 63, arabic: 'المنافقون', kazakh: 'Әль-Мунафиқун', page: 554),
+  (surah: 64, arabic: 'التغابن', kazakh: 'Әт-Тағобун', page: 556),
+  (surah: 65, arabic: 'الطلاق', kazakh: 'Әт-Толәқ', page: 558),
+  (surah: 66, arabic: 'التحريم', kazakh: 'Әт-Тахрим', page: 560),
+  (surah: 67, arabic: 'الملك', kazakh: 'Әль-Мүлк', page: 562),
+  (surah: 68, arabic: 'القلم', kazakh: 'Әль-Қалам', page: 564),
+  (surah: 69, arabic: 'الحاقة', kazakh: 'Әль-Хаққоһ', page: 566),
+  (surah: 70, arabic: 'المعارج', kazakh: 'Әль-Мағариж', page: 568),
   (surah: 71, arabic: 'نوح', kazakh: 'Нух', page: 570),
-  (surah: 72, arabic: 'الجن', kazakh: 'Аль-Жын', page: 572),
-  (surah: 73, arabic: 'المزمل', kazakh: 'Аль-Муззаммил', page: 574),
-  (surah: 74, arabic: 'المدثر', kazakh: 'Аль-Муддасир', page: 575),
-  (surah: 75, arabic: 'القيامة', kazakh: 'Аль-Қиямет', page: 577),
-  (surah: 76, arabic: 'الإنسان', kazakh: 'Аль-Инсан', page: 578),
-  (surah: 77, arabic: 'المرسلات', kazakh: 'Аль-Мурсалат', page: 580),
-  (surah: 78, arabic: 'النبأ', kazakh: 'Ан-Наба', page: 582),
-  (surah: 79, arabic: 'النازعات', kazakh: 'Ан-Назиғат', page: 583),
+  (surah: 72, arabic: 'الجن', kazakh: 'Әль-Жын', page: 572),
+  (surah: 73, arabic: 'المزمل', kazakh: 'Әль-Муззаммил', page: 574),
+  (surah: 74, arabic: 'المدثر', kazakh: 'Әль-Муддасир', page: 575),
+  (surah: 75, arabic: 'القيامة', kazakh: 'Әль-Қиямет', page: 577),
+  (surah: 76, arabic: 'الإنسان', kazakh: 'Әль-Инсан', page: 578),
+  (surah: 77, arabic: 'المرسلات', kazakh: 'Әль-Мурсалат', page: 580),
+  (surah: 78, arabic: 'النبأ', kazakh: 'Ән-Нәбә', page: 582),
+  (surah: 79, arabic: 'النازعات', kazakh: 'Ән-Нәзиғат', page: 583),
   (surah: 80, arabic: 'عبس', kazakh: 'Абаса', page: 585),
-  (surah: 81, arabic: 'التكوير', kazakh: 'Ат-Таквир', page: 586),
-  (surah: 82, arabic: 'الانفطار', kazakh: 'Аль-Инфитар', page: 587),
-  (surah: 83, arabic: 'المطففين', kazakh: 'Аль-Мутаффифин', page: 587),
-  (surah: 84, arabic: 'الانشقاق', kazakh: 'Аль-Иншиқақ', page: 589),
-  (surah: 85, arabic: 'البروج', kazakh: 'Аль-Бурудж', page: 590),
-  (surah: 86, arabic: 'الطارق', kazakh: 'Ат-Тарық', page: 591),
-  (surah: 87, arabic: 'الأعلى', kazakh: 'Аль-Ағла', page: 591),
-  (surah: 88, arabic: 'الغاشية', kazakh: 'Аль-Ғашия', page: 592),
-  (surah: 89, arabic: 'الفجر', kazakh: 'Аль-Фажр', page: 593),
-  (surah: 90, arabic: 'البلد', kazakh: 'Аль-Балад', page: 594),
-  (surah: 91, arabic: 'الشمس', kazakh: 'Аш-Шамс', page: 595),
-  (surah: 92, arabic: 'الليل', kazakh: 'Аль-Ләйл', page: 595),
-  (surah: 93, arabic: 'الضحى', kazakh: 'Ад-Духа', page: 596),
-  (surah: 94, arabic: 'الشرح', kazakh: 'Аль-Инширах', page: 596),
-  (surah: 95, arabic: 'التين', kazakh: 'Ат-Тин', page: 597),
-  (surah: 96, arabic: 'العلق', kazakh: 'Аль-Алақ', page: 597),
-  (surah: 97, arabic: 'القدر', kazakh: 'Аль-Қадр', page: 598),
-  (surah: 98, arabic: 'البينة', kazakh: 'Аль-Баййина', page: 598),
-  (surah: 99, arabic: 'الزلزلة', kazakh: 'Аз-Зилзал', page: 599),
-  (surah: 100, arabic: 'العاديات', kazakh: 'Аль-Адият', page: 599),
-  (surah: 101, arabic: 'القارعة', kazakh: 'Аль-Қариа', page: 600),
-  (surah: 102, arabic: 'التكاثر', kazakh: 'Ат-Такасур', page: 600),
-  (surah: 103, arabic: 'العصر', kazakh: 'Аль-Аср', page: 601),
-  (surah: 104, arabic: 'الهمزة', kazakh: 'Аль-Хумаза', page: 601),
-  (surah: 105, arabic: 'الفيل', kazakh: 'Аль-Фил', page: 601),
-  (surah: 106, arabic: 'قريش', kazakh: 'Қурайш', page: 602),
-  (surah: 107, arabic: 'الماعون', kazakh: 'Аль-Мағун', page: 602),
-  (surah: 108, arabic: 'الكوثر', kazakh: 'Аль-Кәусар', page: 602),
-  (surah: 109, arabic: 'الكافرون', kazakh: 'Аль-Кафирун', page: 603),
-  (surah: 110, arabic: 'النصر', kazakh: 'Ан-Наср', page: 603),
-  (surah: 111, arabic: 'المسد', kazakh: 'Аль-Масад', page: 603),
-  (surah: 112, arabic: 'الإخلاص', kazakh: 'Аль-Ихлас', page: 604),
-  (surah: 113, arabic: 'الفلق', kazakh: 'Аль-Фалақ', page: 604),
-  (surah: 114, arabic: 'الناس', kazakh: 'Ан-Нас', page: 604),
+  (surah: 81, arabic: 'التكوير', kazakh: 'Әт-Такуир', page: 586),
+  (surah: 82, arabic: 'الانفطار', kazakh: 'Әль-Инфитор', page: 587),
+  (surah: 83, arabic: 'المطففين', kazakh: 'Әль-Мутаффифин', page: 587),
+  (surah: 84, arabic: 'الانشقاق', kazakh: 'Әль-Иншиқақ', page: 589),
+  (surah: 85, arabic: 'البروج', kazakh: 'Әль-Бурудж', page: 590),
+  (surah: 86, arabic: 'الطارق', kazakh: 'Әт-Ториқ', page: 591),
+  (surah: 87, arabic: 'الأعلى', kazakh: 'Әль-Ағлә', page: 591),
+  (surah: 88, arabic: 'الغاشية', kazakh: 'Әль-Ғошияһ', page: 592),
+  (surah: 89, arabic: 'الفجر', kazakh: 'Әль-Фажр', page: 593),
+  (surah: 90, arabic: 'البلد', kazakh: 'Әль-Бәләд', page: 594),
+  (surah: 91, arabic: 'الشمس', kazakh: 'Әш-Шамс', page: 595),
+  (surah: 92, arabic: 'الليل', kazakh: 'Әль-Ләйл', page: 595),
+  (surah: 93, arabic: 'الضحى', kazakh: 'Әд-Духа', page: 596),
+  (surah: 94, arabic: 'الشرح', kazakh: 'Әль-Инширах', page: 596),
+  (surah: 95, arabic: 'التين', kazakh: 'Әт-Тин', page: 597),
+  (surah: 96, arabic: 'العلق', kazakh: 'Әль-Алақ', page: 597),
+  (surah: 97, arabic: 'القدر', kazakh: 'Әль-Қадр', page: 598),
+  (surah: 98, arabic: 'البينة', kazakh: 'Әль-Баййинәһ', page: 598),
+  (surah: 99, arabic: 'الزلزلة', kazakh: 'Әз-Зилзаләһ', page: 599),
+  (surah: 100, arabic: 'العاديات', kazakh: 'Әль-Адият', page: 599),
+  (surah: 101, arabic: 'القارعة', kazakh: 'Әль-Қариғаһ', page: 600),
+  (surah: 102, arabic: 'التكاثر', kazakh: 'Әт-Такасур', page: 600),
+  (surah: 103, arabic: 'العصر', kazakh: 'Әль-Аср', page: 601),
+  (surah: 104, arabic: 'الهمزة', kazakh: 'Әль-Хумазаһ', page: 601),
+  (surah: 105, arabic: 'الفيل', kazakh: 'Әль-Фил', page: 601),
+  (surah: 106, arabic: 'قريش', kazakh: 'Қуройш', page: 602),
+  (surah: 107, arabic: 'الماعون', kazakh: 'Әль-Мағун', page: 602),
+  (surah: 108, arabic: 'الكوثر', kazakh: 'Әль-Кәусар', page: 602),
+  (surah: 109, arabic: 'الكافرون', kazakh: 'Әль-Кафирун', page: 603),
+  (surah: 110, arabic: 'النصر', kazakh: 'Ән-Наср', page: 603),
+  (surah: 111, arabic: 'المسد', kazakh: 'Әль-Масад', page: 603),
+  (surah: 112, arabic: 'الإخلاص', kazakh: 'Әль-Ихләс', page: 604),
+  (surah: 113, arabic: 'الفلق', kazakh: 'Әль-Фалақ', page: 604),
+  (surah: 114, arabic: 'الناس', kazakh: 'Ән-Нәс', page: 604),
 ];
 
 // ─── Surah picker bottom sheet ────────────────────────────────────────────────

@@ -72,7 +72,7 @@ class _HomeScreenState extends State<HomeScreen>
             children: [
               // Header
               Padding(
-                padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+                padding: const EdgeInsets.fromLTRB(24, 28, 24, 12),
                 child: Row(
                   children: [
                     GestureDetector(

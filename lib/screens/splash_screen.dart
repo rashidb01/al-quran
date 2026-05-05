@@ -19,10 +19,10 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _navigate() async {
-    await Future.delayed(const Duration(milliseconds: 300));
+    final state = context.read<AppState>();
+    await state.initFuture;
     if (!mounted) return;
 
-    final state = context.read<AppState>();
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(

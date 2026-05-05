@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/ayah.dart';
 import '../providers/app_state.dart';
+import '../theme.dart';
+import '../l10n.dart';
 
 class CounterScreen extends StatefulWidget {
   final Ayah ayah;
@@ -42,16 +44,17 @@ class _CounterScreenState extends State<CounterScreen>
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
+    final isDark = state.isDarkMode;
+    final l = L10n(state.locale);
     final goal = state.sanaqCount;
     final count = state.counter;
     final goalReached = state.goalReached;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppTheme.bg(isDark),
       body: SafeArea(
         child: Column(
           children: [
-            // AppBar
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Row(
@@ -62,22 +65,22 @@ class _CounterScreenState extends State<CounterScreen>
                       width: 36,
                       height: 36,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF5F5F5),
+                        color: AppTheme.surface(isDark),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       alignment: Alignment.center,
-                      child: const Icon(Icons.arrow_back_ios_new_rounded,
-                          size: 16, color: Color(0xFF1A1A2E)),
+                      child: Icon(Icons.arrow_back_ios_new_rounded,
+                          size: 16, color: AppTheme.primary(isDark)),
                     ),
                   ),
-                  const Expanded(
+                  Expanded(
                     child: Text(
-                      'Санақ',
+                      l.sanaqGoal,
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF1A1A2E),
+                        color: AppTheme.primary(isDark),
                       ),
                     ),
                   ),
@@ -85,9 +88,8 @@ class _CounterScreenState extends State<CounterScreen>
                 ],
               ),
             ),
-            Container(height: 1, color: const Color(0xFFF0F0F0)),
+            Container(height: 1, color: AppTheme.divider(isDark)),
 
-            // Аят — сверху, занимает всё место
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(24),
@@ -100,15 +102,15 @@ class _CounterScreenState extends State<CounterScreen>
                         padding: const EdgeInsets.symmetric(
                             horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF0F7F4),
+                          color: AppTheme.surface(isDark),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Text(
-                          '${widget.ayah.surahName} • ${widget.ayah.verseNumber}-аят',
-                          style: const TextStyle(
+                          '${widget.ayah.surahName} • ${widget.ayah.verseNumber}',
+                          style: TextStyle(
                             fontFamily: 'ScheherazadeNew',
                             fontSize: 14,
-                            color: Color(0xFF2E7D5E),
+                            color: AppTheme.secondary(isDark),
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -117,11 +119,11 @@ class _CounterScreenState extends State<CounterScreen>
                       Text(
                         widget.ayah.textUthmani,
                         textDirection: TextDirection.rtl,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: 'ScheherazadeNew',
                           fontSize: 28,
                           height: 2.0,
-                          color: Color(0xFF1A1A2E),
+                          color: AppTheme.primary(isDark),
                         ),
                       ),
                     ],
@@ -130,12 +132,14 @@ class _CounterScreenState extends State<CounterScreen>
               ),
             ),
 
-            // Счётчик — снизу зафиксирован
             _CounterBottom(
               count: count,
               goal: goal,
               goalReached: goalReached,
               scaleAnim: _scaleAnim,
+              isDark: isDark,
+              goalLabel: l.goalReached,
+              goalSubLabel: l.sanaqGoal,
               onIncrement: _increment,
               onReset: () => context.read<AppState>().resetCounter(),
               onDismissGoal: () => context.read<AppState>().dismissGoal(),
@@ -152,6 +156,9 @@ class _CounterBottom extends StatelessWidget {
   final int goal;
   final bool goalReached;
   final Animation<double> scaleAnim;
+  final bool isDark;
+  final String goalLabel;
+  final String goalSubLabel;
   final VoidCallback onIncrement;
   final VoidCallback onReset;
   final VoidCallback onDismissGoal;
@@ -161,6 +168,9 @@ class _CounterBottom extends StatelessWidget {
     required this.goal,
     required this.goalReached,
     required this.scaleAnim,
+    required this.isDark,
+    required this.goalLabel,
+    required this.goalSubLabel,
     required this.onIncrement,
     required this.onReset,
     required this.onDismissGoal,
@@ -169,10 +179,10 @@ class _CounterBottom extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: Color(0xFFF0F0F0))),
-        boxShadow: [
+      decoration: BoxDecoration(
+        color: AppTheme.bg(isDark),
+        border: Border(top: BorderSide(color: AppTheme.divider(isDark))),
+        boxShadow: const [
           BoxShadow(
             color: Color(0x0C000000),
             blurRadius: 20,
@@ -189,19 +199,12 @@ class _CounterBottom extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Баннер "Мақсат орындалды"
-          // Внутри твоего метода build:
-// ...
-          // Баннер "Мақсат орындалды"
           AnimatedSwitcher(
             duration: const Duration(milliseconds: 300),
             child: goalReached
                 ? GestureDetector(
                     key: const ValueKey('goal'),
-                    onTap: () {
-                      // Если пользователь нажал сам, скрываем немедленно
-                      onDismissGoal();
-                    },
+                    onTap: onDismissGoal,
                     child: Container(
                       width: double.infinity,
                       margin: const EdgeInsets.only(bottom: 14),
@@ -210,24 +213,23 @@ class _CounterBottom extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: const Color(0xFF2E7D5E),
                         borderRadius: BorderRadius.circular(14),
-                        // Добавим небольшую тень для красоты
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
+                            color: Colors.black.withValues(alpha: 0.1),
                             blurRadius: 8,
                             offset: const Offset(0, 4),
                           ),
                         ],
                       ),
-                      child: const Row(
+                      child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.check_circle_rounded,
+                          const Icon(Icons.check_circle_rounded,
                               color: Colors.white, size: 18),
-                          SizedBox(width: 8),
+                          const SizedBox(width: 8),
                           Text(
-                            'Мақсат орындалды!', // Убрал "нажмите чтобы продолжить", так как он уходит сам
-                            style: TextStyle(
+                            goalLabel,
+                            style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.w600,
                               fontSize: 13,
@@ -239,28 +241,25 @@ class _CounterBottom extends StatelessWidget {
                   )
                 : const SizedBox(key: ValueKey('no-goal')),
           ),
-// ...
 
           Row(
             children: [
-              // Сброс слева
               GestureDetector(
                 onTap: onReset,
                 child: Container(
                   width: 60,
                   height: 60,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF5F5F5),
+                    color: AppTheme.surface(isDark),
                     borderRadius: BorderRadius.circular(16),
                   ),
                   alignment: Alignment.center,
-                  child: const Icon(Icons.refresh_rounded,
-                      color: Color(0xFF9E9E9E), size: 24),
+                  child: Icon(Icons.refresh_rounded,
+                      color: AppTheme.tertiary(isDark), size: 24),
                 ),
               ),
               const SizedBox(width: 16),
 
-              // Большая кнопка-счётчик по центру — нажимаешь и число меняется
               Expanded(
                 child: GestureDetector(
                   onTap: onIncrement,
@@ -270,13 +269,13 @@ class _CounterBottom extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: goalReached
                           ? const Color(0xFF2E7D5E)
-                          : const Color(0xFF1A1A2E),
+                          : AppTheme.primary(isDark),
                       borderRadius: BorderRadius.circular(22),
                       boxShadow: [
                         BoxShadow(
                           color: (goalReached
                                   ? const Color(0xFF2E7D5E)
-                                  : const Color(0xFF1A1A2E))
+                                  : AppTheme.primary(isDark))
                               .withValues(alpha: 0.25),
                           blurRadius: 20,
                           offset: const Offset(0, 8),
@@ -301,7 +300,7 @@ class _CounterBottom extends StatelessWidget {
                         ),
                         if (goal > 0)
                           Text(
-                            'мақсат: $goal',
+                            '$goalSubLabel: $goal',
                             style: const TextStyle(
                               fontSize: 11,
                               color: Colors.white60,

@@ -39,6 +39,12 @@ class AppState extends ChangeNotifier {
   // Quran font size
   double quranFontSize = 24.0;
 
+  late final Future<void> initFuture;
+
+  AppState() {
+    initFuture = init();
+  }
+
   Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
     isFirstLaunch = prefs.getBool('launched') != true;
