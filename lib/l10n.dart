@@ -115,4 +115,39 @@ class L10n {
       case AppLocale.en: return "Juz $number";
     }
   }
+
+  String get divideByPages {
+    switch (locale) {
+      case AppLocale.kk: return "Бөлу";
+      case AppLocale.ru: return "Разделить на";
+      case AppLocale.en: return "Divide by";
+    }
+  }
+
+  String get notifTitle {
+    switch (locale) {
+      case AppLocale.kk: return "Санақ Құран";
+      case AppLocale.ru: return "Санак Куран";
+      case AppLocale.en: return "Sanaq Quran";
+    }
+  }
+
+  String notifBody({
+    required int remaining,
+    required int total,
+    required int perStep,
+    String? nextTime,
+  }) {
+    final next = nextTime != null ? ' в $nextTime' : '';
+    switch (locale) {
+      case AppLocale.kk:
+        final kNext = nextTime != null ? ' $nextTime-де' : '';
+        return "Қалғаны: $remaining\nМақсатқа жету үшін ($total) келесі хабарламаға дейін$kNext $perStep рет жасаңыз";
+      case AppLocale.ru:
+        return "Остаток: $remaining\nЧтобы достичь цели ($total), сделайте $perStep повторений до следующего уведомления$next";
+      case AppLocale.en:
+        final eNext = nextTime != null ? ' at $nextTime' : '';
+        return "Remaining: $remaining\nTo reach your goal ($total), complete $perStep repetitions before the next notification$eNext";
+    }
+  }
 }

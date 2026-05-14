@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/ayah.dart';
 import '../services/quran_service.dart';
+import '../services/notification_service.dart';
 import '../l10n.dart';
 
 class AppState extends ChangeNotifier {
@@ -13,6 +14,7 @@ class AppState extends ChangeNotifier {
 
   // Санак цель
   int sanaqCount = 0;
+  int dividerCount = 0;
 
   // Страницы мусхафа
   final Map<int, List<Ayah>> _pages = {};
@@ -54,6 +56,7 @@ class AppState extends ChangeNotifier {
     quranFontSize = prefs.getDouble('quranFontSize') ?? 24.0;
     if (!isFirstLaunch) {
       sanaqCount = prefs.getInt('sanaqCount') ?? 0;
+      dividerCount = prefs.getInt('dividerCount') ?? 0;
       counter = prefs.getInt('counter') ?? 0;
       final raw = prefs.getString('selectedAyahs');
       if (raw != null) {
@@ -97,16 +100,28 @@ class AppState extends ChangeNotifier {
     );
   }
 
-  Future<void> setSanaqCount(int v) async {
+  Future<void> setSanaqCount(int v, {int divider = 0}) async {
     sanaqCount = v;
+    dividerCount = divider;
     counter = 0;
     goalReached = false;
     isFirstLaunch = false;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('launched', true);
     await prefs.setInt('sanaqCount', v);
+    await prefs.setInt('dividerCount', divider);
     await prefs.setInt('counter', 0);
     notifyListeners();
+    if (divider > 0) {
+      await NotificationService.scheduleReminders(
+        totalCount: v,
+        currentCounter: 0,
+        divider: divider,
+        locale: locale,
+      );
+    } else {
+      await NotificationService.cancelAll();
+    }
   }
 
   List<Ayah>? getPage(int page) => _pages[page];
@@ -174,8 +189,14 @@ class AppState extends ChangeNotifier {
         notifyListeners();
       });
     } else {
-      // Если цель уже пройдена, просто обновляем число без показа баннера
       notifyListeners();
+    }
+    if (dividerCount > 0) {
+      NotificationService.rescheduleWithNewRemaining(
+        totalCount: sanaqCount,
+        currentCounter: counter,
+        locale: locale,
+      );
     }
   }
 
@@ -191,5 +212,6 @@ class AppState extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt('counter', 0);
     notifyListeners();
+    await NotificationService.cancelAll();
   }
 }

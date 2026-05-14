@@ -16,16 +16,19 @@ class CountInputScreen extends StatefulWidget {
 
 class _CountInputScreenState extends State<CountInputScreen> {
   final _controller = TextEditingController();
+  final _dividerController = TextEditingController();
 
   @override
   void dispose() {
     _controller.dispose();
+    _dividerController.dispose();
     super.dispose();
   }
 
   Future<void> _continue() async {
     final val = int.tryParse(_controller.text.trim()) ?? 0;
-    await context.read<AppState>().setSanaqCount(val);
+    final div = int.tryParse(_dividerController.text.trim()) ?? 0;
+    await context.read<AppState>().setSanaqCount(val, divider: div);
     if (mounted) {
       Navigator.pushReplacement(
         context,
@@ -82,6 +85,30 @@ class _CountInputScreenState extends State<CountInputScreen> {
                   hintStyle: TextStyle(
                       color: AppTheme.tertiary(isDark),
                       fontSize: 48,
+                      fontWeight: FontWeight.w200),
+                  border: InputBorder.none,
+                ),
+              ),
+              const SizedBox(height: 32),
+              Text(l.divideByPages,
+                  style: TextStyle(
+                      fontSize: 13, color: AppTheme.tertiary(isDark))),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _dividerController,
+                keyboardType: TextInputType.number,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                textAlign: TextAlign.left,
+                style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.w200,
+                  color: AppTheme.primary(isDark),
+                ),
+                decoration: InputDecoration(
+                  hintText: '0',
+                  hintStyle: TextStyle(
+                      color: AppTheme.tertiary(isDark),
+                      fontSize: 32,
                       fontWeight: FontWeight.w200),
                   border: InputBorder.none,
                 ),

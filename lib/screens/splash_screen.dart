@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_state.dart';
+import '../services/notification_service.dart';
 import 'count_input_screen.dart';
 import 'dua_screen.dart';
 
@@ -21,6 +22,7 @@ class _SplashScreenState extends State<SplashScreen> {
   Future<void> _navigate() async {
     final state = context.read<AppState>();
     await state.initFuture;
+    await NotificationService.requestPermission();
     if (!mounted) return;
 
     Navigator.pushReplacement(

@@ -3,11 +3,13 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'providers/app_state.dart';
 import 'screens/splash_screen.dart';
+import 'services/notification_service.dart';
 import 'theme.dart';
 import 'l10n.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await NotificationService.init();
   runApp(const AlQuranApp());
 }
 
